@@ -89,7 +89,7 @@ class SecurityConfigTests {
             .andExpect(header().exists("Content-Security-Policy"))
             .andExpect(header().string(
                 "Referrer-Policy",
-                "strict-origin-when-cross-origin"
+                "no-referrer"
             ))
             .andExpect(header().string(
                 "Permissions-Policy",

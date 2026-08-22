@@ -2,7 +2,9 @@ package com.aclg.apecan.auth.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -10,9 +12,13 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -33,10 +39,12 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ApiAuthenticationEntryPoint apiAuthenticationEntryPoint,
-            ApiAccessDeniedHandler apiAccessDeniedHandler) throws Exception {
+            ApiAccessDeniedHandler apiAccessDeniedHandler,
+            SessionRegistry sessionRegistry) throws Exception {
         RequestMatcher requisicaoApi = request -> {
             String caminho = request.getRequestURI().substring(request.getContextPath().length());
             return caminho.equals("/api") || caminho.startsWith("/api/");
@@ -46,6 +54,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(autorizacao -> autorizacao
                 .requestMatchers(
                     "/login",
+                    "/ativar-conta",
                     "/error",
                     "/error/**",
                     "/css/**",
@@ -63,9 +72,19 @@ public class SecurityConfig {
                 ).hasRole("ADMINISTRADOR")
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults())
+            .formLogin(formulario -> formulario
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .usernameParameter("login")
+                .passwordParameter("senha")
+                .defaultSuccessUrl("/inicio", true)
+                .failureUrl("/login?erro")
+                .permitAll()
+            )
             .logout(logout -> logout
-                .logoutUrl("/logout")
+                .logoutRequestMatcher(
+                    PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/logout")
+                )
                 .logoutSuccessUrl("/login?logout")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
@@ -75,6 +94,8 @@ public class SecurityConfig {
             .sessionManagement(sessao -> sessao
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .sessionFixation(fixacao -> fixacao.changeSessionId())
+                .maximumSessions(-1)
+                .sessionRegistry(sessionRegistry)
             )
             .csrf(Customizer.withDefaults())
             .exceptionHandling(excecoes -> excecoes
@@ -102,7 +123,7 @@ public class SecurityConfig {
                 .frameOptions(frame -> frame.deny())
                 .addHeaderWriter(new StaticHeadersWriter(
                     "Referrer-Policy",
-                    "strict-origin-when-cross-origin"
+                    "no-referrer"
                 ))
                 .addHeaderWriter(new StaticHeadersWriter(
                     "Permissions-Policy",
@@ -114,5 +135,16 @@ public class SecurityConfig {
             .cors(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    @Bean
+    SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    static HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 }

@@ -3,6 +3,8 @@ package com.aclg.apecan.usuario.entity;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
@@ -18,13 +20,13 @@ import java.util.Objects;
 
 @Entity
 @Table(
-    name = "tokens_redefinicao_senha",
+    name = "tokens_credencial",
     uniqueConstraints = @UniqueConstraint(
-        name = "uq_tokens_redefinicao_senha_hash",
+        name = "uq_tokens_credencial_hash",
         columnNames = "token_hash"
     )
 )
-public class TokenRedefinicaoSenha {
+public class TokenCredencial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,12 +37,16 @@ public class TokenRedefinicaoSenha {
     @JoinColumn(
         name = "id_usuario",
         nullable = false,
-        foreignKey = @ForeignKey(name = "fk_tokens_redefinicao_usuario")
+        foreignKey = @ForeignKey(name = "fk_tokens_credencial_usuario")
     )
     private Usuario usuario;
 
     @Column(name = "token_hash", nullable = false, length = 64)
     private String tokenHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private FinalidadeTokenCredencial finalidade;
 
     @Column(name = "solicitado_em", nullable = false, updatable = false)
     private LocalDateTime solicitadoEm;
@@ -51,20 +57,22 @@ public class TokenRedefinicaoSenha {
     @Column(name = "utilizado_em")
     private LocalDateTime utilizadoEm;
 
-    protected TokenRedefinicaoSenha() {
+    protected TokenCredencial() {
     }
 
-    public TokenRedefinicaoSenha(Usuario usuario, String tokenHash,
-                                 LocalDateTime solicitadoEm,
-                                 LocalDateTime expiraEm) {
+    public TokenCredencial(Usuario usuario, String tokenHash,
+                           FinalidadeTokenCredencial finalidade,
+                           LocalDateTime solicitadoEm,
+                           LocalDateTime expiraEm) {
         this.usuario = Objects.requireNonNull(usuario);
         this.tokenHash = Objects.requireNonNull(tokenHash);
+        this.finalidade = Objects.requireNonNull(finalidade);
         this.solicitadoEm = Objects.requireNonNull(solicitadoEm);
         this.expiraEm = Objects.requireNonNull(expiraEm);
         if (!expiraEm.isAfter(solicitadoEm)) {
             throw new OperacaoInvalidaException(
                 "EXPIRACAO_TOKEN_INVALIDA",
-                "A expiração deve ser posterior à solicitação."
+                "A expiracao deve ser posterior a solicitacao."
             );
         }
     }
@@ -81,15 +89,22 @@ public class TokenRedefinicaoSenha {
         if (foiUtilizado()) {
             throw new OperacaoInvalidaException(
                 "TOKEN_JA_UTILIZADO",
-                "O token já foi utilizado."
+                "O token ja foi utilizado."
             );
         }
         utilizadoEm = Objects.requireNonNull(instante);
     }
 
+    public void invalidar(LocalDateTime instante) {
+        if (!foiUtilizado()) {
+            utilizadoEm = Objects.requireNonNull(instante);
+        }
+    }
+
     public Long getId() { return id; }
     public Usuario getUsuario() { return usuario; }
     public String getTokenHash() { return tokenHash; }
+    public FinalidadeTokenCredencial getFinalidade() { return finalidade; }
     public LocalDateTime getSolicitadoEm() { return solicitadoEm; }
     public LocalDateTime getExpiraEm() { return expiraEm; }
     public LocalDateTime getUtilizadoEm() { return utilizadoEm; }

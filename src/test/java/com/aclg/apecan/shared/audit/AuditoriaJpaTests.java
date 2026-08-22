@@ -36,7 +36,6 @@ class AuditoriaJpaTests {
     void deveRegistrarCriacaoEAtualizacaoComRelogioControlado() {
         Usuario usuario = new Usuario(
             "Usuário de Teste",
-            "{bcrypt}hash-de-teste",
             "usuario.teste",
             "52998224725",
             "teste@apecan.org.br",
@@ -44,6 +43,13 @@ class AuditoriaJpaTests {
             "14999999999",
             TipoPerfil.USUARIO,
             null
+        );
+        usuario.definirSenhaDefinitiva(
+            "{bcrypt}hash-de-teste",
+            LocalDateTime.ofInstant(
+                INSTANTE_INICIAL,
+                AuditoriaConfig.FUSO_HORARIO_APECAN
+            )
         );
 
         usuarioRepository.saveAndFlush(usuario);
@@ -58,6 +64,7 @@ class AuditoriaJpaTests {
         relogio.avancarPara(INSTANTE_ATUALIZACAO);
         usuario.atualizarDadosPessoais(
             "Usuário Atualizado",
+            "usuario.teste",
             "atualizado@apecan.org.br",
             "sem-foto.png",
             "14988888888"

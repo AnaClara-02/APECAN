@@ -19,7 +19,8 @@ public class UsuarioDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String login) {
-        return usuarioRepository.findByLogin(login)
+        String loginNormalizado = login == null ? "" : login.trim().toLowerCase();
+        return usuarioRepository.findByLogin(loginNormalizado)
             .map(UsuarioPrincipal::de)
             .orElseThrow(() -> new UsernameNotFoundException("Usuário ou senha inválidos."));
     }

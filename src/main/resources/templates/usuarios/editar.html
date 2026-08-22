@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar usuario | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="cabecalho">
+    <a class="marca marca-clara" th:href="@{/inicio}"><span class="marca-sigla">APECAN</span></a>
+    <nav class="navegacao"><a th:href="@{/usuarios/{id}(id=${usuario.id})}">Voltar ao usuario</a></nav>
+</header>
+
+<main class="conteudo conteudo-estreito">
+    <section class="cabecalho-pagina"><div><p class="rotulo">Administracao</p><h1>Editar usuario</h1></div></section>
+
+    <form class="cartao formulario"
+          th:action="@{/usuarios/{id}/editar(id=${usuario.id})}"
+          th:object="${editarUsuarioForm}" method="post">
+        <div class="alerta alerta-erro" th:if="${#fields.hasGlobalErrors()}"
+             th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
+
+        <label for="nome">Nome completo</label>
+        <input id="nome" type="text" th:field="*{nome}" maxlength="150" required>
+        <span class="erro-campo" th:errors="*{nome}"></span>
+
+        <label for="login">Login</label>
+        <input id="login" type="text" th:field="*{login}" maxlength="50" required>
+        <span class="erro-campo" th:errors="*{login}"></span>
+
+        <label for="email">E-mail</label>
+        <input id="email" type="email" th:field="*{email}" maxlength="254" required>
+        <span class="erro-campo" th:errors="*{email}"></span>
+
+        <label for="telefone">Telefone</label>
+        <input id="telefone" type="tel" th:field="*{telefone}" maxlength="20" required>
+        <span class="erro-campo" th:errors="*{telefone}"></span>
+
+        <div class="acoes">
+            <button class="botao botao-primario" type="submit">Salvar alteracoes</button>
+            <a class="botao botao-secundario" th:href="@{/usuarios/{id}(id=${usuario.id})}">Cancelar</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

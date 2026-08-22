@@ -38,7 +38,7 @@ public class Usuario extends EntidadeAuditavel {
     @Column(nullable = false, length = 150)
     private String nome;
 
-    @Column(name = "senha_hash", nullable = false, length = 255)
+    @Column(name = "senha_hash", length = 255)
     private String senhaHash;
 
     @Column(nullable = false, length = 50)
@@ -83,11 +83,10 @@ public class Usuario extends EntidadeAuditavel {
     protected Usuario() {
     }
 
-    public Usuario(String nome, String senhaHash, String login, String cpf,
+    public Usuario(String nome, String login, String cpf,
                    String email, String fotoUrl, String telefone,
                    TipoPerfil tipoPerfil, Usuario criadoPor) {
         this.nome = Objects.requireNonNull(nome);
-        this.senhaHash = Objects.requireNonNull(senhaHash);
         this.login = Objects.requireNonNull(login);
         this.cpf = CpfNormalizer.normalizar(cpf);
         this.email = Objects.requireNonNull(email);
@@ -97,9 +96,10 @@ public class Usuario extends EntidadeAuditavel {
         this.criadoPor = criadoPor;
     }
 
-    public void atualizarDadosPessoais(String nome, String email,
+    public void atualizarDadosPessoais(String nome, String login, String email,
                                        String fotoUrl, String telefone) {
         this.nome = Objects.requireNonNull(nome);
+        this.login = Objects.requireNonNull(login);
         this.email = Objects.requireNonNull(email);
         this.fotoUrl = Objects.requireNonNull(fotoUrl);
         this.telefone = Objects.requireNonNull(telefone);
@@ -113,6 +113,12 @@ public class Usuario extends EntidadeAuditavel {
 
     public void alterarSenha(String novoHash) {
         this.senhaHash = Objects.requireNonNull(novoHash);
+    }
+
+    public boolean estaAtivado() {
+        return !primeiroAcessoPendente
+            && senhaHash != null
+            && senhaDefinitivaEm != null;
     }
 
     public void alterarPerfil(TipoPerfil novoPerfil) {

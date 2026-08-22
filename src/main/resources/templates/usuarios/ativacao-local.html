@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Link de ativacao | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="pagina-centralizada">
+<main class="cartao ativacao-local">
+    <p class="rotulo">Exibicao unica</p>
+    <h1>Conta de <span th:text="${nomeUsuario}">usuario</span> preparada</h1>
+    <div class="alerta alerta-aviso">
+        Copie e entregue este link somente ao titular da conta. Ele nao sera mostrado novamente.
+    </div>
+    <label for="linkAtivacao">Link de ativacao</label>
+    <textarea id="linkAtivacao" class="campo-link" readonly th:text="${ativacao.linkLocal}"></textarea>
+    <p class="texto-secundario">Valido ate <span th:text="${ativacao.expiraEm}"></span>.</p>
+    <div class="acoes">
+        <a class="botao botao-primario" th:href="${ativacao.linkLocal}">Abrir link neste computador</a>
+        <a class="botao botao-secundario" th:href="@{/usuarios}">Concluir</a>
+    </div>
+</main>
+</body>
+</html>

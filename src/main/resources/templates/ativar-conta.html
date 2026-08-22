@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ativar conta | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="pagina-centralizada">
+<main class="cartao autenticacao">
+    <div class="marca">
+        <span class="marca-sigla">APECAN</span>
+        <span>Ativacao segura de conta</span>
+    </div>
+
+    <h1>Defina sua senha</h1>
+
+    <div class="alerta alerta-erro" th:if="${erroAtivacao}" th:text="${erroAtivacao}"></div>
+
+    <div th:if="${tokenValido}">
+        <p>
+            Ola, <strong th:text="${tokenInfo.nomeUsuario}">usuario</strong>.
+            Crie sua senha definitiva para concluir a ativacao.
+        </p>
+        <p class="texto-secundario">
+            Use entre 12 e 64 caracteres. O link funciona uma unica vez.
+        </p>
+
+        <form class="formulario" th:action="@{/ativar-conta}"
+              th:object="${ativacaoForm}" method="post">
+            <input type="hidden" th:field="*{token}">
+
+            <label for="senha">Nova senha</label>
+            <input id="senha" type="password" th:field="*{senha}"
+                   autocomplete="new-password" minlength="12" maxlength="64" required>
+            <span class="erro-campo" th:errors="*{senha}"></span>
+
+            <label for="confirmacaoSenha">Confirme a nova senha</label>
+            <input id="confirmacaoSenha" type="password" th:field="*{confirmacaoSenha}"
+                   autocomplete="new-password" minlength="12" maxlength="64" required>
+            <span class="erro-campo" th:errors="*{confirmacaoSenha}"></span>
+
+            <button class="botao botao-primario" type="submit">Ativar minha conta</button>
+        </form>
+    </div>
+
+    <a class="link-retorno" th:href="@{/login}">Voltar ao login</a>
+</main>
+</body>
+</html>

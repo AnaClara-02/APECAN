@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Detalhes do usuario | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="cabecalho">
+    <a class="marca marca-clara" th:href="@{/inicio}"><span class="marca-sigla">APECAN</span></a>
+    <nav class="navegacao"><a th:href="@{/usuarios}">Voltar aos usuarios</a></nav>
+</header>
+
+<main class="conteudo">
+    <section class="cabecalho-pagina">
+        <div><p class="rotulo">Usuario</p><h1 th:text="${usuario.nome}">Nome</h1></div>
+        <a class="botao botao-secundario" th:href="@{/usuarios/{id}/editar(id=${usuario.id})}">Editar dados</a>
+    </section>
+
+    <div class="alerta alerta-sucesso" th:if="${sucesso}" th:text="${sucesso}"></div>
+    <div class="alerta alerta-erro" th:if="${erro}" th:text="${erro}"></div>
+
+    <section class="grade-cartoes">
+        <article class="cartao dados">
+            <h2>Dados da conta</h2>
+            <dl>
+                <dt>Login</dt><dd th:text="${usuario.login}">login</dd>
+                <dt>CPF</dt><dd th:text="${usuario.cpf}">CPF</dd>
+                <dt>E-mail</dt><dd th:text="${usuario.email}">email</dd>
+                <dt>Telefone</dt><dd th:text="${usuario.telefone}">telefone</dd>
+                <dt>Perfil</dt><dd th:text="${usuario.tipoPerfil}">perfil</dd>
+                <dt>Status</dt><dd th:text="${usuario.status}">status</dd>
+                <dt>Ativacao</dt><dd th:text="${usuario.primeiroAcessoPendente ? 'Pendente' : 'Concluida'}">estado</dd>
+            </dl>
+        </article>
+
+        <article class="cartao">
+            <h2>Gerenciar acesso</h2>
+            <p class="texto-secundario">
+                Alteracoes de perfil e status exigem sua senha e uma justificativa para auditoria.
+            </p>
+
+            <form class="formulario formulario-compacto"
+                  th:if="${usuario.primeiroAcessoPendente and usuario.estaAtivo()}"
+                  th:action="@{/usuarios/{id}/reenviar-ativacao(id=${usuario.id})}" method="post">
+                <button class="botao botao-secundario" type="submit">Gerar novo link de ativacao</button>
+            </form>
+
+            <form class="formulario formulario-compacto"
+                  th:object="${alterarAcessoForm}"
+                  th:action="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'}
+                    ? @{/usuarios/{id}/rebaixar(id=${usuario.id})}
+                    : @{/usuarios/{id}/promover(id=${usuario.id})}"
+                  method="post">
+                <label for="justificativaPerfil">Justificativa</label>
+                <textarea id="justificativaPerfil" th:field="*{justificativa}" maxlength="500" required></textarea>
+                <label for="senhaPerfil">Sua senha atual</label>
+                <input id="senhaPerfil" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
+                <button class="botao botao-secundario" type="submit"
+                        th:text="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'} ? 'Alterar para usuario' : 'Promover a administrador'">
+                    Alterar perfil
+                </button>
+            </form>
+
+            <form class="formulario formulario-compacto"
+                  th:object="${alterarAcessoForm}"
+                  th:action="${usuario.estaAtivo()}
+                    ? @{/usuarios/{id}/desativar(id=${usuario.id})}
+                    : @{/usuarios/{id}/reativar(id=${usuario.id})}"
+                  method="post">
+                <label for="justificativaStatus">Justificativa</label>
+                <textarea id="justificativaStatus" th:field="*{justificativa}" maxlength="500" required></textarea>
+                <label for="senhaStatus">Sua senha atual</label>
+                <input id="senhaStatus" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
+                <button class="botao" th:classappend="${usuario.estaAtivo()} ? ' botao-perigo' : ' botao-secundario'"
+                        type="submit" th:text="${usuario.estaAtivo()} ? 'Desativar usuario' : 'Reativar usuario'">
+                    Alterar status
+                </button>
+            </form>
+        </article>
+    </section>
+</main>
+</body>
+</html>

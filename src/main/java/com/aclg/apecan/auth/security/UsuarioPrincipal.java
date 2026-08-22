@@ -21,14 +21,17 @@ public final class UsuarioPrincipal implements UserDetails {
     private final String senhaHash;
     private final TipoPerfil tipoPerfil;
     private final boolean ativo;
+    private final boolean ativado;
 
     private UsuarioPrincipal(Long id, String login, String senhaHash,
-                             TipoPerfil tipoPerfil, boolean ativo) {
+                             TipoPerfil tipoPerfil, boolean ativo,
+                             boolean ativado) {
         this.id = id;
         this.login = login;
         this.senhaHash = senhaHash;
         this.tipoPerfil = tipoPerfil;
         this.ativo = ativo;
+        this.ativado = ativado;
     }
 
     public static UsuarioPrincipal de(Usuario usuario) {
@@ -37,7 +40,8 @@ public final class UsuarioPrincipal implements UserDetails {
             usuario.getLogin(),
             usuario.getSenhaHash(),
             usuario.getTipoPerfil(),
-            usuario.getStatus() == StatusUsuario.ATIVO
+            usuario.getStatus() == StatusUsuario.ATIVO,
+            usuario.estaAtivado()
         );
     }
 
@@ -66,6 +70,6 @@ public final class UsuarioPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return ativo;
+        return ativo && ativado;
     }
 }
