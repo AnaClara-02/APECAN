@@ -1,5 +1,8 @@
 package com.aclg.apecan.paciente.entity;
 
+import com.aclg.apecan.shared.audit.EntidadeAuditavel;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
+import com.aclg.apecan.shared.validation.CpfNormalizer;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,8 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -26,7 +27,7 @@ import java.util.Objects;
     name = "pacientes",
     uniqueConstraints = @UniqueConstraint(name = "uq_pacientes_cpf", columnNames = "cpf")
 )
-public class Paciente {
+public class Paciente extends EntidadeAuditavel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,12 +66,6 @@ public class Paciente {
         foreignKey = @ForeignKey(name = "fk_pacientes_atualizado_por"))
     private Usuario atualizadoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
     @Column(name = "desativado_em")
     private LocalDateTime desativadoEm;
 
@@ -79,44 +74,46 @@ public class Paciente {
 
     public Paciente(String nome, String cpf, LocalDate dataNascimento,
                     String telefone, String endereco, String localTratamento,
-                    Usuario criadoPor) {
+                    Usuario criadoPor, LocalDate hoje) {
         this.nome = Objects.requireNonNull(nome);
-        this.cpf = Objects.requireNonNull(cpf);
+        this.cpf = CpfNormalizer.normalizar(cpf);
         this.dataNascimento = Objects.requireNonNull(dataNascimento);
         this.telefone = Objects.requireNonNull(telefone);
         this.endereco = Objects.requireNonNull(endereco);
         this.localTratamento = Objects.requireNonNull(localTratamento);
         this.criadoPor = Objects.requireNonNull(criadoPor);
+        validarDataNascimento(hoje);
     }
 
     public void atualizarDados(String nome, LocalDate dataNascimento,
                                String telefone, String endereco,
-                               String localTratamento, Usuario responsavel) {
+                               String localTratamento, Usuario responsavel,
+                               LocalDate hoje) {
         this.nome = Objects.requireNonNull(nome);
         this.dataNascimento = Objects.requireNonNull(dataNascimento);
         this.telefone = Objects.requireNonNull(telefone);
         this.endereco = Objects.requireNonNull(endereco);
         this.localTratamento = Objects.requireNonNull(localTratamento);
         this.atualizadoPor = Objects.requireNonNull(responsavel);
+        validarDataNascimento(hoje);
     }
 
-    public void alterarStatus(StatusPaciente novoStatus, Usuario responsavel) {
+    public void alterarStatus(StatusPaciente novoStatus, Usuario responsavel,
+                              LocalDateTime instante) {
         this.status = Objects.requireNonNull(novoStatus);
         this.atualizadoPor = Objects.requireNonNull(responsavel);
-        this.desativadoEm = novoStatus == StatusPaciente.ATIVO ? null : LocalDateTime.now();
+        this.desativadoEm = novoStatus == StatusPaciente.ATIVO
+            ? null
+            : Objects.requireNonNull(instante);
     }
 
-    @PrePersist
-    private void aoCriar() {
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
-        if (dataNascimento.isAfter(LocalDate.now())) {
-            throw new IllegalStateException("A data de nascimento não pode estar no futuro.");
+    private void validarDataNascimento(LocalDate hoje) {
+        if (dataNascimento.isAfter(Objects.requireNonNull(hoje))) {
+            throw new OperacaoInvalidaException(
+                "DATA_NASCIMENTO_FUTURA",
+                "A data de nascimento não pode estar no futuro."
+            );
         }
-    }
-
-    @PreUpdate
-    private void aoAtualizar() {
-        atualizadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -129,7 +126,5 @@ public class Paciente {
     public StatusPaciente getStatus() { return status; }
     public Usuario getCriadoPor() { return criadoPor; }
     public Usuario getAtualizadoPor() { return atualizadoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
     public LocalDateTime getDesativadoEm() { return desativadoEm; }
 }

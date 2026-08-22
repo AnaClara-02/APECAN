@@ -1,6 +1,8 @@
 package com.aclg.apecan.equipamento.entity;
 
 import com.aclg.apecan.doacao.entity.Doacao;
+import com.aclg.apecan.shared.audit.EntidadeAuditavel;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,16 +15,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
 @Table(name = "equipamentos")
-public class Equipamento {
+public class Equipamento extends EntidadeAuditavel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,12 +51,6 @@ public class Equipamento {
         foreignKey = @ForeignKey(name = "fk_equipamentos_criado_por"))
     private Usuario criadoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
     protected Equipamento() {
     }
 
@@ -79,40 +72,42 @@ public class Equipamento {
 
     public void emprestar() {
         if (status != StatusEquipamento.ATIVO) {
-            throw new IllegalStateException("Somente equipamento ativo pode ser emprestado.");
+            throw new OperacaoInvalidaException(
+                "EQUIPAMENTO_INDISPONIVEL",
+                "Somente equipamento ativo pode ser emprestado."
+            );
         }
         status = StatusEquipamento.EMPRESTADO;
     }
 
     public void registrarDevolucao() {
         if (status != StatusEquipamento.EMPRESTADO) {
-            throw new IllegalStateException("O equipamento não está emprestado.");
+            throw new OperacaoInvalidaException(
+                "EQUIPAMENTO_NAO_EMPRESTADO",
+                "O equipamento não está emprestado."
+            );
         }
         status = StatusEquipamento.ATIVO;
     }
 
     public void desativar() {
         if (status == StatusEquipamento.EMPRESTADO) {
-            throw new IllegalStateException("Equipamento emprestado não pode ser desativado.");
+            throw new OperacaoInvalidaException(
+                "EQUIPAMENTO_EMPRESTADO",
+                "Equipamento emprestado não pode ser desativado."
+            );
         }
         status = StatusEquipamento.INATIVO;
     }
 
     public void reativar() {
         if (status == StatusEquipamento.EMPRESTADO) {
-            throw new IllegalStateException("Equipamento emprestado não pode ser reativado.");
+            throw new OperacaoInvalidaException(
+                "EQUIPAMENTO_EMPRESTADO",
+                "Equipamento emprestado não pode ser reativado."
+            );
         }
         status = StatusEquipamento.ATIVO;
-    }
-
-    @PrePersist
-    private void aoCriar() {
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    private void aoAtualizar() {
-        atualizadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -121,6 +116,4 @@ public class Equipamento {
     public EstadoConservacao getEstadoConservacao() { return estadoConservacao; }
     public StatusEquipamento getStatus() { return status; }
     public Usuario getCriadoPor() { return criadoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
 }

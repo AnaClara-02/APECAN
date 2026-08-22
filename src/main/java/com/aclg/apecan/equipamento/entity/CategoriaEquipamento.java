@@ -1,5 +1,6 @@
 package com.aclg.apecan.equipamento.entity;
 
+import com.aclg.apecan.shared.audit.EntidadeAuditavel;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,12 +11,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -26,7 +24,7 @@ import java.util.Objects;
         columnNames = "nome"
     )
 )
-public class CategoriaEquipamento {
+public class CategoriaEquipamento extends EntidadeAuditavel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,12 +42,6 @@ public class CategoriaEquipamento {
         foreignKey = @ForeignKey(name = "fk_categorias_equipamentos_criado_por"))
     private Usuario criadoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
     protected CategoriaEquipamento() {
     }
 
@@ -64,20 +56,8 @@ public class CategoriaEquipamento {
         this.descricao = descricao;
     }
 
-    @PrePersist
-    private void aoCriar() {
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    private void aoAtualizar() {
-        atualizadoEm = LocalDateTime.now();
-    }
-
     public Long getId() { return id; }
     public String getNome() { return nome; }
     public String getDescricao() { return descricao; }
     public Usuario getCriadoPor() { return criadoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
 }

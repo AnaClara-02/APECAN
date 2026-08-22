@@ -1,5 +1,8 @@
 package com.aclg.apecan.voluntario.entity;
 
+import com.aclg.apecan.shared.audit.EntidadeAuditavel;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
+import com.aclg.apecan.shared.validation.CpfNormalizer;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,8 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -26,7 +27,7 @@ import java.util.Objects;
     name = "voluntarios",
     uniqueConstraints = @UniqueConstraint(name = "uq_voluntarios_cpf", columnNames = "cpf")
 )
-public class Voluntario {
+public class Voluntario extends EntidadeAuditavel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,12 +63,6 @@ public class Voluntario {
         foreignKey = @ForeignKey(name = "fk_voluntarios_atualizado_por"))
     private Usuario atualizadoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
     @Column(name = "desativado_em")
     private LocalDateTime desativadoEm;
 
@@ -75,28 +70,31 @@ public class Voluntario {
     }
 
     public Voluntario(String nome, String cpf, LocalDate dataNascimento,
-                      String telefone, String endereco, Usuario criadoPor) {
+                      String telefone, String endereco, Usuario criadoPor,
+                      LocalDate hoje) {
         this.nome = Objects.requireNonNull(nome);
-        this.cpf = Objects.requireNonNull(cpf);
+        this.cpf = CpfNormalizer.normalizar(cpf);
         this.dataNascimento = Objects.requireNonNull(dataNascimento);
         this.telefone = Objects.requireNonNull(telefone);
         this.endereco = Objects.requireNonNull(endereco);
         this.criadoPor = Objects.requireNonNull(criadoPor);
+        validarDataNascimento(hoje);
     }
 
     public void atualizarDados(String nome, LocalDate dataNascimento,
                                String telefone, String endereco,
-                               Usuario responsavel) {
+                               Usuario responsavel, LocalDate hoje) {
         this.nome = Objects.requireNonNull(nome);
         this.dataNascimento = Objects.requireNonNull(dataNascimento);
         this.telefone = Objects.requireNonNull(telefone);
         this.endereco = Objects.requireNonNull(endereco);
         this.atualizadoPor = Objects.requireNonNull(responsavel);
+        validarDataNascimento(hoje);
     }
 
-    public void desativar(Usuario responsavel) {
+    public void desativar(Usuario responsavel, LocalDateTime instante) {
         this.status = StatusVoluntario.INATIVO;
-        this.desativadoEm = LocalDateTime.now();
+        this.desativadoEm = Objects.requireNonNull(instante);
         this.atualizadoPor = Objects.requireNonNull(responsavel);
     }
 
@@ -106,17 +104,13 @@ public class Voluntario {
         this.atualizadoPor = Objects.requireNonNull(responsavel);
     }
 
-    @PrePersist
-    private void aoCriar() {
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
-        if (dataNascimento.isAfter(LocalDate.now())) {
-            throw new IllegalStateException("A data de nascimento não pode estar no futuro.");
+    private void validarDataNascimento(LocalDate hoje) {
+        if (dataNascimento.isAfter(Objects.requireNonNull(hoje))) {
+            throw new OperacaoInvalidaException(
+                "DATA_NASCIMENTO_FUTURA",
+                "A data de nascimento não pode estar no futuro."
+            );
         }
-    }
-
-    @PreUpdate
-    private void aoAtualizar() {
-        atualizadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -128,7 +122,5 @@ public class Voluntario {
     public StatusVoluntario getStatus() { return status; }
     public Usuario getCriadoPor() { return criadoPor; }
     public Usuario getAtualizadoPor() { return atualizadoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
     public LocalDateTime getDesativadoEm() { return desativadoEm; }
 }

@@ -1,5 +1,6 @@
 package com.aclg.apecan.usuario.entity;
 
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -55,19 +55,17 @@ public class TokenRedefinicaoSenha {
     }
 
     public TokenRedefinicaoSenha(Usuario usuario, String tokenHash,
+                                 LocalDateTime solicitadoEm,
                                  LocalDateTime expiraEm) {
         this.usuario = Objects.requireNonNull(usuario);
         this.tokenHash = Objects.requireNonNull(tokenHash);
+        this.solicitadoEm = Objects.requireNonNull(solicitadoEm);
         this.expiraEm = Objects.requireNonNull(expiraEm);
-    }
-
-    @PrePersist
-    private void aoCriar() {
-        if (solicitadoEm == null) {
-            solicitadoEm = LocalDateTime.now();
-        }
         if (!expiraEm.isAfter(solicitadoEm)) {
-            throw new IllegalStateException("A expiração deve ser posterior à solicitação.");
+            throw new OperacaoInvalidaException(
+                "EXPIRACAO_TOKEN_INVALIDA",
+                "A expiração deve ser posterior à solicitação."
+            );
         }
     }
 
@@ -79,11 +77,14 @@ public class TokenRedefinicaoSenha {
         return utilizadoEm != null;
     }
 
-    public void marcarComoUtilizado() {
+    public void marcarComoUtilizado(LocalDateTime instante) {
         if (foiUtilizado()) {
-            throw new IllegalStateException("O token já foi utilizado.");
+            throw new OperacaoInvalidaException(
+                "TOKEN_JA_UTILIZADO",
+                "O token já foi utilizado."
+            );
         }
-        utilizadoEm = LocalDateTime.now();
+        utilizadoEm = Objects.requireNonNull(instante);
     }
 
     public Long getId() { return id; }

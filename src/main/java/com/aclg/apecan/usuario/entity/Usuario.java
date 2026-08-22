@@ -1,5 +1,7 @@
 package com.aclg.apecan.usuario.entity;
 
+import com.aclg.apecan.shared.audit.EntidadeAuditavel;
+import com.aclg.apecan.shared.validation.CpfNormalizer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,8 +13,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -28,7 +28,7 @@ import java.util.Objects;
         @UniqueConstraint(name = "uq_usuarios_email", columnNames = "email")
     }
 )
-public class Usuario {
+public class Usuario extends EntidadeAuditavel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,12 +77,6 @@ public class Usuario {
     )
     private Usuario criadoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
     @Column(name = "desativado_em")
     private LocalDateTime desativadoEm;
 
@@ -95,7 +89,7 @@ public class Usuario {
         this.nome = Objects.requireNonNull(nome);
         this.senhaHash = Objects.requireNonNull(senhaHash);
         this.login = Objects.requireNonNull(login);
-        this.cpf = Objects.requireNonNull(cpf);
+        this.cpf = CpfNormalizer.normalizar(cpf);
         this.email = Objects.requireNonNull(email);
         this.fotoUrl = Objects.requireNonNull(fotoUrl);
         this.telefone = Objects.requireNonNull(telefone);
@@ -111,10 +105,10 @@ public class Usuario {
         this.telefone = Objects.requireNonNull(telefone);
     }
 
-    public void definirSenhaDefinitiva(String novoHash) {
+    public void definirSenhaDefinitiva(String novoHash, LocalDateTime instante) {
         this.senhaHash = Objects.requireNonNull(novoHash);
         this.primeiroAcessoPendente = false;
-        this.senhaDefinitivaEm = LocalDateTime.now();
+        this.senhaDefinitivaEm = Objects.requireNonNull(instante);
     }
 
     public void alterarSenha(String novoHash) {
@@ -125,26 +119,14 @@ public class Usuario {
         this.tipoPerfil = Objects.requireNonNull(novoPerfil);
     }
 
-    public void desativar() {
+    public void desativar(LocalDateTime instante) {
         this.status = StatusUsuario.INATIVO;
-        this.desativadoEm = LocalDateTime.now();
+        this.desativadoEm = Objects.requireNonNull(instante);
     }
 
     public void reativar() {
         this.status = StatusUsuario.ATIVO;
         this.desativadoEm = null;
-    }
-
-    @PrePersist
-    private void aoCriar() {
-        if (criadoEm == null) {
-            criadoEm = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    private void aoAtualizar() {
-        atualizadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -160,7 +142,5 @@ public class Usuario {
     public boolean isPrimeiroAcessoPendente() { return primeiroAcessoPendente; }
     public LocalDateTime getSenhaDefinitivaEm() { return senhaDefinitivaEm; }
     public Usuario getCriadoPor() { return criadoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
     public LocalDateTime getDesativadoEm() { return desativadoEm; }
 }

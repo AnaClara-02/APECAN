@@ -2,6 +2,8 @@ package com.aclg.apecan.despesa.entity;
 
 import com.aclg.apecan.financeiro.entity.MovimentacaoFinanceira;
 import com.aclg.apecan.financeiro.entity.TipoMovimentacao;
+import com.aclg.apecan.shared.audit.EntidadeCriada;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +19,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -28,7 +29,7 @@ import java.util.Objects;
         columnNames = "id_movimentacao_financeira"
     )
 )
-public class Despesa {
+public class Despesa extends EntidadeCriada {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,9 +55,6 @@ public class Despesa {
         foreignKey = @ForeignKey(name = "fk_despesas_registrado_por"))
     private Usuario registradoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
     protected Despesa() {
     }
 
@@ -73,16 +71,16 @@ public class Despesa {
 
     private void validarMovimentacao() {
         if (movimentacaoFinanceira.getTipo() != TipoMovimentacao.SAIDA) {
-            throw new IllegalArgumentException(
+            throw new OperacaoInvalidaException(
+                "DESPESA_MOVIMENTACAO_INVALIDA",
                 "Uma despesa deve estar vinculada a uma movimentação de SAÍDA."
             );
         }
     }
 
     @PrePersist
-    private void aoCriar() {
+    private void validarAntesDePersistir() {
         validarMovimentacao();
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -93,5 +91,4 @@ public class Despesa {
         return movimentacaoFinanceira;
     }
     public Usuario getRegistradoPor() { return registradoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
 }

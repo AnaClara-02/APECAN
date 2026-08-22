@@ -1,6 +1,8 @@
 package com.aclg.apecan.financeiro.entity;
 
 import com.aclg.apecan.doacao.entity.Doacao;
+import com.aclg.apecan.shared.audit.EntidadeCriada;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +22,6 @@ import jakarta.persistence.UniqueConstraint;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -31,7 +32,7 @@ import java.util.Objects;
         columnNames = "id_doacao"
     )
 )
-public class MovimentacaoFinanceira {
+public class MovimentacaoFinanceira extends EntidadeCriada {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,9 +69,6 @@ public class MovimentacaoFinanceira {
         foreignKey = @ForeignKey(name = "fk_movimentacoes_registrado_por"))
     private Usuario registradoPor;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
-
     protected MovimentacaoFinanceira() {
     }
 
@@ -92,25 +90,29 @@ public class MovimentacaoFinanceira {
 
     private void validar() {
         if (valor.signum() <= 0) {
-            throw new IllegalArgumentException("O valor da movimentação deve ser positivo.");
+            throw new OperacaoInvalidaException(
+                "MOVIMENTACAO_VALOR_INVALIDO",
+                "O valor da movimentação deve ser positivo."
+            );
         }
         if (origem == OrigemMovimentacao.DOACAO
                 && (doacao == null || tipo != TipoMovimentacao.ENTRADA)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoInvalidaException(
+                "MOVIMENTACAO_DOACAO_INVALIDA",
                 "Movimentação originada por doação exige doação e tipo ENTRADA."
             );
         }
         if (origem == OrigemMovimentacao.OUTRO_MEIO && doacao != null) {
-            throw new IllegalArgumentException(
+            throw new OperacaoInvalidaException(
+                "MOVIMENTACAO_ORIGEM_INVALIDA",
                 "Movimentação de outro meio não pode estar ligada a uma doação."
             );
         }
     }
 
     @PrePersist
-    private void aoCriar() {
+    private void validarAntesDePersistir() {
         validar();
-        if (criadoEm == null) criadoEm = LocalDateTime.now();
     }
 
     public Long getId() { return id; }
@@ -122,5 +124,4 @@ public class MovimentacaoFinanceira {
     public String getOrigemDescricao() { return origemDescricao; }
     public Doacao getDoacao() { return doacao; }
     public Usuario getRegistradoPor() { return registradoPor; }
-    public LocalDateTime getCriadoEm() { return criadoEm; }
 }

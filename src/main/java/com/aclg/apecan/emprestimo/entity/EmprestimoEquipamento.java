@@ -2,6 +2,7 @@ package com.aclg.apecan.emprestimo.entity;
 
 import com.aclg.apecan.equipamento.entity.Equipamento;
 import com.aclg.apecan.paciente.entity.Paciente;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.usuario.entity.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -66,10 +67,14 @@ public class EmprestimoEquipamento {
     public void registrarDevolucao(LocalDate dataDevolucao) {
         Objects.requireNonNull(dataDevolucao);
         if (this.dataDevolucao != null) {
-            throw new IllegalStateException("A devolução já foi registrada.");
+            throw new OperacaoInvalidaException(
+                "DEVOLUCAO_JA_REGISTRADA",
+                "A devolução já foi registrada."
+            );
         }
         if (dataDevolucao.isBefore(dataEmprestimo)) {
-            throw new IllegalArgumentException(
+            throw new OperacaoInvalidaException(
+                "DATA_DEVOLUCAO_INVALIDA",
                 "A devolução não pode ocorrer antes do empréstimo."
             );
         }
