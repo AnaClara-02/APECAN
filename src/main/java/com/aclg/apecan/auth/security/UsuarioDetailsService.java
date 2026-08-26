@@ -10,18 +10,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UsuarioDetailsService implements UserDetailsService {
 
-    private final UsuarioRepository usuarioRepository;
+	private final UsuarioRepository usuarioRepository;
 
-    public UsuarioDetailsService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
+	private final TentativasLoginService tentativasLoginService;
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String login) {
-        String loginNormalizado = login == null ? "" : login.trim().toLowerCase();
-        return usuarioRepository.findByLogin(loginNormalizado)
-            .map(UsuarioPrincipal::de)
-            .orElseThrow(() -> new UsernameNotFoundException("Usuário ou senha inválidos."));
-    }
+	public UsuarioDetailsService(UsuarioRepository usuarioRepository, TentativasLoginService tentativasLoginService) {
+		this.usuarioRepository = usuarioRepository;
+		this.tentativasLoginService = tentativasLoginService;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public UserDetails loadUserByUsername(String login) {
+		String loginNormalizado = login == null ? "" : login.trim().toLowerCase();
+		tentativasLoginService.verificar(loginNormalizado);
+		return usuarioRepository.findByLogin(loginNormalizado)
+			.map(UsuarioPrincipal::de)
+			.orElseThrow(() -> new UsernameNotFoundException("Usuário ou senha inválidos."));
+	}
+
 }

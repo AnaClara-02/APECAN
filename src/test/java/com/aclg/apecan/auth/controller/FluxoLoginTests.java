@@ -30,108 +30,101 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class FluxoLoginTests {
 
-    private static final String SENHA = "Senha de acesso 2026";
+	private static final String SENHA = "Senha de acesso 2026";
 
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-    @Autowired
-    private WebApplicationContext applicationContext;
+	@Autowired
+	private WebApplicationContext applicationContext;
 
-    @Autowired
-    private UsuarioService usuarioService;
+	@Autowired
+	private UsuarioService usuarioService;
 
-    @Autowired
-    private AtivacaoUsuarioService ativacaoService;
+	@Autowired
+	private AtivacaoUsuarioService ativacaoService;
 
-    @BeforeEach
-    void prepararMockMvc() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext)
-            .apply(springSecurity())
-            .build();
-    }
+	@BeforeEach
+	void prepararMockMvc() {
+		mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext).apply(springSecurity()).build();
+	}
 
-    @Test
-    void contaPendenteNaoDeveEntrarEContaAtivadaDeveEntrar() throws Exception {
-        UsuarioCriadoResultado resultado =
-            usuarioService.cadastrarPrimeiroAdministrador(formulario());
+	@Test
+	void contaPendenteNaoDeveEntrarEContaAtivadaDeveEntrar() throws Exception {
+		UsuarioCriadoResultado resultado = usuarioService.cadastrarPrimeiroAdministrador(formulario());
 
-        mockMvc.perform(post("/login")
-                .param("login", "admin.web")
-                .param("senha", SENHA)
-                .with(csrf()))
-            .andExpect(redirectedUrl("/login?erro"))
-            .andExpect(unauthenticated());
+		mockMvc.perform(post("/login").param("login", "admin.web").param("senha", SENHA).with(csrf()))
+			.andExpect(redirectedUrl("/login?erro"))
+			.andExpect(unauthenticated());
 
-        String token = URI.create(resultado.ativacao().linkLocal())
-            .getRawQuery()
-            .substring("token=".length());
-        ativacaoService.ativar(token, SENHA, SENHA);
+		String token = URI.create(resultado.ativacao().linkLocal()).getRawQuery().substring("token=".length());
+		ativacaoService.ativar(token, SENHA, SENHA);
 
-        MockHttpSession sessao = (MockHttpSession) mockMvc.perform(post("/login")
-                .param("login", "ADMIN.WEB")
-                .param("senha", SENHA)
-                .with(csrf()))
-            .andExpect(redirectedUrl("/inicio"))
-            .andExpect(authenticated().withUsername("admin.web"))
-            .andReturn()
-            .getRequest()
-            .getSession(false);
+		MockHttpSession sessao = (MockHttpSession) mockMvc
+			.perform(post("/login").param("login", "ADMIN.WEB").param("senha", SENHA).with(csrf()))
+			.andExpect(redirectedUrl("/inicio"))
+			.andExpect(authenticated().withUsername("admin.web"))
+			.andReturn()
+			.getRequest()
+			.getSession(false);
 
-        mockMvc.perform(get("/usuarios").session(sessao))
-            .andExpect(status().isOk())
-            .andExpect(view().name("usuarios/lista"));
+		mockMvc.perform(get("/usuarios").session(sessao))
+			.andExpect(status().isOk())
+			.andExpect(view().name("usuarios/lista"));
 
-        mockMvc.perform(get("/usuarios/" + resultado.usuario().id()).session(sessao))
-            .andExpect(status().isOk())
-            .andExpect(view().name("usuarios/detalhe"));
+		mockMvc.perform(get("/usuarios/" + resultado.usuario().id()).session(sessao))
+			.andExpect(status().isOk())
+			.andExpect(view().name("usuarios/detalhe"));
 
-        mockMvc.perform(get("/usuarios/" + resultado.usuario().id() + "/editar").session(sessao))
-            .andExpect(status().isOk())
-            .andExpect(view().name("usuarios/editar"));
+		mockMvc.perform(get("/usuarios/" + resultado.usuario().id() + "/editar").session(sessao))
+			.andExpect(status().isOk())
+			.andExpect(view().name("usuarios/editar"));
 
-        mockMvc.perform(get("/usuarios/novo").session(sessao))
-            .andExpect(status().isOk())
-            .andExpect(view().name("usuarios/novo"));
+		mockMvc.perform(get("/usuarios/novo").session(sessao))
+			.andExpect(status().isOk())
+			.andExpect(view().name("usuarios/novo"));
 
-        mockMvc.perform(get("/logout").session(sessao))
-            .andExpect(status().isNotFound())
-            .andExpect(authenticated().withUsername("admin.web"));
+		mockMvc.perform(get("/logout").session(sessao))
+			.andExpect(status().isNotFound())
+			.andExpect(authenticated().withUsername("admin.web"));
 
-        mockMvc.perform(post("/usuarios")
-                .session(sessao)
-                .with(csrf())
-                .param("nome", "Funcionario de Teste")
-                .param("login", "funcionario.teste")
-                .param("cpf", "11144477735")
-                .param("email", "funcionario@apecan.org.br")
-                .param("telefone", "14988888888"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("usuarios/ativacao-local"));
-    }
+		mockMvc
+			.perform(post("/usuarios").session(sessao)
+				.with(csrf())
+				.param("nome", "Funcionario de Teste")
+				.param("login", "funcionario.teste")
+				.param("cpf", "11144477735")
+				.param("email", "funcionario@apecan.org.br")
+				.param("telefone", "14988888888"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("usuarios/ativacao-local"));
+	}
 
-    @Test
-    void loginEAtivacaoDevemPossuirPaginasPublicasELogoutGetNaoDeveExistir()
-            throws Exception {
-        mockMvc.perform(get("/login"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("login"));
+	@Test
+	void loginEAtivacaoDevemPossuirPaginasPublicasELogoutGetNaoDeveExistir() throws Exception {
+		mockMvc.perform(get("/login")).andExpect(status().isOk()).andExpect(view().name("login"));
 
-        mockMvc.perform(get("/ativar-conta"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("ativar-conta"));
+		mockMvc.perform(get("/ativar-conta")).andExpect(status().isOk()).andExpect(view().name("ativar-conta"));
 
-        mockMvc.perform(get("/logout"))
-            .andExpect(status().isFound())
-            .andExpect(redirectedUrl("/login"));
-    }
+		mockMvc.perform(get("/esqueci-senha")).andExpect(status().isOk()).andExpect(view().name("esqueci-senha"));
 
-    private NovoUsuarioForm formulario() {
-        NovoUsuarioForm formulario = new NovoUsuarioForm();
-        formulario.setNome("Administrador Web");
-        formulario.setLogin("admin.web");
-        formulario.setCpf("52998224725");
-        formulario.setEmail("admin.web@apecan.org.br");
-        formulario.setTelefone("14999999999");
-        return formulario;
-    }
+		mockMvc.perform(post("/esqueci-senha").with(csrf()).param("email", "nao-existe@example.invalid"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("esqueci-senha"));
+
+		mockMvc.perform(post("/esqueci-senha").param("email", "nao-existe@example.invalid"))
+			.andExpect(status().isForbidden());
+
+		mockMvc.perform(get("/logout")).andExpect(status().isFound()).andExpect(redirectedUrl("/login"));
+	}
+
+	private NovoUsuarioForm formulario() {
+		NovoUsuarioForm formulario = new NovoUsuarioForm();
+		formulario.setNome("Administrador Web");
+		formulario.setLogin("admin.web");
+		formulario.setCpf("52998224725");
+		formulario.setEmail("admin.web@apecan.org.br");
+		formulario.setTelefone("14999999999");
+		return formulario;
+	}
+
 }

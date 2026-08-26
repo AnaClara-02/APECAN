@@ -25,6 +25,10 @@
     <div class="alerta alerta-sucesso" th:if="${param.ativada}">
         Conta ativada. Agora voce ja pode entrar.
     </div>
+    <div class="alerta alerta-sucesso" th:if="${param.senhaRedefinida}">
+        Senha redefinida. Entre novamente.
+    </div>
+    <div class="alerta alerta-sucesso" th:if="${sucesso}" th:text="${sucesso}"></div>
 
     <form class="formulario" th:action="@{/login}" method="post">
         <label for="login">Login</label>
@@ -35,6 +39,7 @@
 
         <button class="botao botao-primario" type="submit">Entrar</button>
     </form>
+    <p><a th:href="@{/esqueci-senha}">Esqueci minha senha</a></p>
 </main>
 </body>
 </html>

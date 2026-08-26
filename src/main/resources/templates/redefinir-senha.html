@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Definir nova senha | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="pagina-centralizada">
+<main class="cartao autenticacao">
+    <h1>Definir nova senha</h1>
+    <div class="alerta alerta-erro" th:if="${erroRedefinicao}" th:text="${erroRedefinicao}"></div>
+    <section th:if="${tokenValido}">
+        <p th:text="|Conta de ${tokenInfo.nomeUsuario()}|">Conta</p>
+        <form class="formulario" th:action="@{/redefinir-senha}" th:object="${redefinirSenhaForm}" method="post">
+            <input type="hidden" th:field="*{token}">
+            <label for="senha">Nova senha</label>
+            <input id="senha" type="password" th:field="*{senha}" autocomplete="new-password" minlength="12" maxlength="64" required>
+            <p class="erro-campo" th:if="${#fields.hasErrors('senha')}" th:errors="*{senha}"></p>
+            <label for="confirmacaoSenha">Confirme a nova senha</label>
+            <input id="confirmacaoSenha" type="password" th:field="*{confirmacaoSenha}" autocomplete="new-password" maxlength="64" required>
+            <p class="erro-campo" th:if="${#fields.hasErrors('confirmacaoSenha')}" th:errors="*{confirmacaoSenha}"></p>
+            <button class="botao botao-primario" type="submit">Salvar nova senha</button>
+        </form>
+    </section>
+    <p><a th:href="@{/login}">Voltar ao login</a></p>
+</main>
+</body>
+</html>

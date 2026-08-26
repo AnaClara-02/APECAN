@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alterar senha | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main class="conteudo cartao">
+    <h1>Alterar minha senha</h1>
+    <div class="alerta alerta-erro" th:if="${erroSenha}" th:text="${erroSenha}"></div>
+    <form class="formulario" th:action="@{/minha-conta/senha}" th:object="${alterarSenhaForm}" method="post">
+        <label for="senhaAtual">Senha atual</label>
+        <input id="senhaAtual" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
+        <p class="erro-campo" th:errors="*{senhaAtual}"></p>
+        <label for="novaSenha">Nova senha</label>
+        <input id="novaSenha" type="password" th:field="*{novaSenha}" autocomplete="new-password" minlength="12" maxlength="64" required>
+        <p class="erro-campo" th:errors="*{novaSenha}"></p>
+        <label for="confirmacaoSenha">Confirme a nova senha</label>
+        <input id="confirmacaoSenha" type="password" th:field="*{confirmacaoSenha}" autocomplete="new-password" maxlength="64" required>
+        <p class="erro-campo" th:errors="*{confirmacaoSenha}"></p>
+        <button class="botao botao-primario" type="submit">Alterar senha</button>
+    </form>
+</main>
+</body>
+</html>

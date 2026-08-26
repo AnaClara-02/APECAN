@@ -1,0 +1,8 @@
+<!DOCTYPE html><html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Voluntario | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head><body><header th:replace="~{fragments/cabecalho :: cabecalho}"></header><main class="conteudo cartao"><h1 th:text="${voluntario==null?'Novo voluntario':'Editar voluntario'}"></h1>
+<form class="formulario" th:action="${voluntario==null}?@{/voluntarios}:@{/voluntarios/{id}/editar(id=${voluntario.id})}" th:object="${voluntarioForm}" method="post"><div class="alerta alerta-erro" th:if="${#fields.hasGlobalErrors()}" th:each="e:${#fields.globalErrors()}" th:text="${e}"></div>
+<label for="nome">Nome</label><input id="nome" th:field="*{nome}" maxlength="150" required><p class="erro-campo" th:errors="*{nome}"></p>
+<label for="cpf">CPF</label><input id="cpf" th:field="*{cpf}" maxlength="14" inputmode="numeric" th:readonly="${voluntario!=null}" required><p class="erro-campo" th:errors="*{cpf}"></p>
+<label for="dataNascimento">Nascimento</label><input id="dataNascimento" type="date" th:field="*{dataNascimento}" required><p class="erro-campo" th:errors="*{dataNascimento}"></p>
+<label for="telefone">Telefone</label><input id="telefone" th:field="*{telefone}" required><p class="erro-campo" th:errors="*{telefone}"></p>
+<label for="endereco">Endereco</label><input id="endereco" th:field="*{endereco}" maxlength="255" required><p class="erro-campo" th:errors="*{endereco}"></p>
+<button class="botao botao-primario" type="submit">Salvar</button></form></main></body></html>

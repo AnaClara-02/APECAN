@@ -12,27 +12,30 @@ import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    Optional<Usuario> findByLogin(String login);
+	Optional<Usuario> findByLogin(String login);
 
-    boolean existsByLogin(String login);
+	Optional<Usuario> findByEmail(String email);
 
-    boolean existsByCpf(String cpf);
+	boolean existsByLogin(String login);
 
-    boolean existsByEmail(String email);
+	boolean existsByCpf(String cpf);
 
-    boolean existsByLoginAndIdNot(String login, Long id);
+	boolean existsByEmail(String email);
 
-    boolean existsByEmailAndIdNot(String email, Long id);
+	boolean existsByLoginAndIdNot(String login, Long id);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select u from Usuario u where u.id = :id")
-    Optional<Usuario> findByIdForUpdate(@Param("id") Long id);
+	boolean existsByEmailAndIdNot(String email, Long id);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-        select u from Usuario u
-        where u.tipoPerfil = com.aclg.apecan.usuario.entity.TipoPerfil.ADMINISTRADOR
-        order by u.id
-        """)
-    List<Usuario> findAdministradoresForUpdate();
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select u from Usuario u where u.id = :id")
+	Optional<Usuario> findByIdForUpdate(@Param("id") Long id);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+			select u from Usuario u
+			where u.tipoPerfil = com.aclg.apecan.usuario.entity.TipoPerfil.ADMINISTRADOR
+			order by u.id
+			""")
+	List<Usuario> findAdministradoresForUpdate();
+
 }

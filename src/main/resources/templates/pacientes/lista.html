@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pacientes | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/cpf-mask.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main class="conteudo">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina">
+        <div><p class="rotulo">Atendimento</p><h1>Pacientes</h1></div>
+        <a class="botao botao-primario" th:href="@{/pacientes/novo}">Cadastrar paciente</a>
+    </section>
+
+    <form class="cartao filtros" method="get" th:action="@{/pacientes}">
+        <div><label for="nome">Nome</label><input id="nome" name="nome" th:value="${nome}" maxlength="150"></div>
+        <div><label for="cpf">CPF</label><input id="cpf" name="cpf" th:value="${cpf}" data-cpf inputmode="numeric"></div>
+        <div><label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="">Todos</option>
+                <option th:each="item : ${statusDisponiveis}" th:value="${item}"
+                        th:text="${item}" th:selected="${item == statusSelecionado}"></option>
+            </select>
+        </div>
+        <button class="botao botao-primario" type="submit">Filtrar</button>
+    </form>
+
+    <div class="cartao tabela-responsiva" th:if="${!pagina.empty}">
+        <table>
+            <thead><tr><th>Nome</th><th>CPF</th><th>Tratamento</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="paciente : ${pagina.content}">
+                <td th:text="${paciente.nome}">Nome</td>
+                <td th:text="${paciente.cpfMascarado}">CPF</td>
+                <td th:text="${paciente.localTratamento}">Local</td>
+                <td><span class="status" th:text="${paciente.status}">ATIVO</span></td>
+                <td><a th:href="@{/pacientes/{id}(id=${paciente.id})}">Ver</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="cartao" th:if="${pagina.empty}">Nenhum paciente encontrado.</div>
+
+    <nav class="paginacao" aria-label="Paginacao" th:if="${pagina.totalPages > 1}">
+        <a class="botao botao-secundario" th:if="${pagina.hasPrevious()}"
+           th:href="@{/pacientes(pagina=${pagina.number - 1},nome=${nome},cpf=${cpf},status=${statusSelecionado})}">Anterior</a>
+        <span th:text="|Pagina ${pagina.number + 1} de ${pagina.totalPages}|">Pagina</span>
+        <a class="botao botao-secundario" th:if="${pagina.hasNext()}"
+           th:href="@{/pacientes(pagina=${pagina.number + 1},nome=${nome},cpf=${cpf},status=${statusSelecionado})}">Proxima</a>
+    </nav>
+</main>
+</body>
+</html>

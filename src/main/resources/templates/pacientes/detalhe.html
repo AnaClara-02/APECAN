@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Paciente | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main class="conteudo">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina">
+        <div><p class="rotulo">Paciente</p><h1 th:text="${paciente.nome}">Nome</h1></div>
+        <div class="acoes"><a class="botao botao-secundario" th:href="@{/pacientes}">Voltar</a><a class="botao botao-primario" th:href="@{/pacientes/{id}/editar(id=${paciente.id})}">Editar</a></div>
+    </section>
+    <section class="grade-cartoes">
+        <article class="cartao dados">
+            <h2>Dados cadastrais</h2>
+            <dl>
+                <dt>CPF</dt><dd th:text="${paciente.cpf}">CPF</dd>
+                <dt>Nascimento</dt><dd th:text="${#temporals.format(paciente.dataNascimento, 'dd/MM/yyyy')}">Data</dd>
+                <dt>Telefone</dt><dd th:text="${paciente.telefone}">Telefone</dd>
+                <dt>Endereco</dt><dd th:text="${paciente.endereco}">Endereco</dd>
+                <dt>Tratamento</dt><dd th:text="${paciente.localTratamento}">Local</dd>
+                <dt>Status</dt><dd th:text="${paciente.status}">ATIVO</dd>
+                <dt>Cadastrado por</dt><dd th:text="${paciente.criadoPor}">Usuario</dd>
+            </dl>
+        </article>
+        <article class="cartao" th:if="${paciente.podeAlterarStatus()}">
+            <h2>Alterar status</h2>
+            <form class="formulario" th:action="@{/pacientes/{id}/status(id=${paciente.id})}" th:object="${alterarStatusPacienteForm}" method="post">
+                <label for="status">Novo status</label>
+                <select id="status" th:field="*{status}" required>
+                    <option value="">Selecione</option>
+                    <option th:each="item : ${statusDisponiveis}" th:if="${item != paciente.status}" th:value="${item}" th:text="${item}"></option>
+                </select>
+                <label for="observacao">Observacao</label><textarea id="observacao" th:field="*{observacao}" maxlength="255" required></textarea>
+                <button class="botao botao-primario" type="submit">Atualizar status</button>
+            </form>
+        </article>
+    </section>
+    <section class="cartao secao">
+        <h2>Historico de status</h2>
+        <div class="tabela-responsiva"><table><thead><tr><th>Data</th><th>Status</th><th>Responsavel</th><th>Observacao</th></tr></thead>
+            <tbody><tr th:each="item : ${historico}"><td th:text="${#temporals.format(item.alteradoEm, 'dd/MM/yyyy HH:mm')}"></td><td th:text="${item.status}"></td><td th:text="${item.alteradoPor}"></td><td th:text="${item.observacao}"></td></tr></tbody>
+        </table></div>
+    </section>
+</main>
+</body>
+</html>

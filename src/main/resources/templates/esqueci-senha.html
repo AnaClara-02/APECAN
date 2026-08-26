@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recuperar senha | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="pagina-centralizada">
+<main class="cartao autenticacao">
+    <h1>Recuperar senha</h1>
+    <p class="texto-secundario">Informe o e-mail cadastrado. A resposta será a mesma mesmo quando a conta não existir.</p>
+    <div class="alerta alerta-sucesso" th:if="${solicitacaoConcluida}">
+        Se houver uma conta ativa para esse e-mail, as instruções foram emitidas.
+    </div>
+    <div class="alerta" th:if="${linkLocal}">
+        Ambiente local: <a th:href="${linkLocal}">abrir redefinição de senha</a>.
+    </div>
+    <form class="formulario" th:action="@{/esqueci-senha}" th:object="${solicitarRedefinicaoForm}" method="post">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" th:field="*{email}" autocomplete="email" maxlength="254" required>
+        <p class="erro-campo" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+        <button class="botao botao-primario" type="submit">Solicitar instruções</button>
+    </form>
+    <p><a th:href="@{/login}">Voltar ao login</a></p>
+</main>
+</body>
+</html>

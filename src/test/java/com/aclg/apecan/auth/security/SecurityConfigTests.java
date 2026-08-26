@@ -67,7 +67,7 @@ class SecurityConfigTests {
     }
 
     @Test
-    void postSemCsrfDeveSerRejeitado() throws Exception {
+	void postSemCsrfDeveSerRejeitado() throws Exception {
         mockMvc.perform(post("/operacao").with(user("comum").roles("USUARIO")))
             .andExpect(status().isForbidden());
 
@@ -75,7 +75,13 @@ class SecurityConfigTests {
                 .with(user("comum").roles("USUARIO"))
                 .with(csrf()))
             .andExpect(status().isNotFound());
-    }
+	}
+
+	@Test
+	void usuarioComumDeveAcessarModuloFuncional() throws Exception {
+		mockMvc.perform(get("/pacientes").with(user("comum").roles("USUARIO")))
+			.andExpect(status().isOk());
+	}
 
     @Test
     void healthERecursosEstaticosDevemSerPublicosEConterCabecalhos() throws Exception {

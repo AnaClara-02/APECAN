@@ -10,14 +10,19 @@
 <main class="cartao ativacao-local">
     <p class="rotulo">Exibicao unica</p>
     <h1>Conta de <span th:text="${nomeUsuario}">usuario</span> preparada</h1>
-    <div class="alerta alerta-aviso">
+    <div class="alerta alerta-aviso" th:if="${ativacao.linkLocal != null}">
         Copie e entregue este link somente ao titular da conta. Ele nao sera mostrado novamente.
     </div>
-    <label for="linkAtivacao">Link de ativacao</label>
-    <textarea id="linkAtivacao" class="campo-link" readonly th:text="${ativacao.linkLocal}"></textarea>
+    <div class="alerta alerta-sucesso" th:if="${ativacao.linkLocal == null}">
+        As instrucoes de ativacao foram enviadas ao e-mail cadastrado.
+    </div>
+    <label for="linkAtivacao" th:if="${ativacao.linkLocal != null}">Link de ativacao</label>
+    <textarea id="linkAtivacao" class="campo-link" readonly
+              th:if="${ativacao.linkLocal != null}" th:text="${ativacao.linkLocal}"></textarea>
     <p class="texto-secundario">Valido ate <span th:text="${ativacao.expiraEm}"></span>.</p>
     <div class="acoes">
-        <a class="botao botao-primario" th:href="${ativacao.linkLocal}">Abrir link neste computador</a>
+        <a class="botao botao-primario" th:if="${ativacao.linkLocal != null}"
+           th:href="${ativacao.linkLocal}">Abrir link neste computador</a>
         <a class="botao botao-secundario" th:href="@{/usuarios}">Concluir</a>
     </div>
 </main>

@@ -13,6 +13,14 @@
         <span>Sistema integrado</span>
     </a>
     <nav class="navegacao">
+        <a th:href="@{/pacientes}">Pacientes</a>
+        <a th:href="@{/voluntarios}">Voluntarios</a>
+        <a th:href="@{/equipamentos}">Equipamentos</a>
+        <a th:href="@{/emprestimos}">Emprestimos</a>
+        <a th:href="@{/doacoes}">Doacoes</a>
+        <a th:href="@{/financeiro}">Financeiro</a>
+        <a th:href="@{/relatorios}">Relatorios</a>
+        <a th:href="@{/minha-conta/senha}">Minha senha</a>
         <a th:if="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'}" th:href="@{/usuarios}">Usuarios</a>
         <form th:action="@{/logout}" method="post">
             <button class="botao-link" type="submit">Sair</button>
@@ -38,13 +46,20 @@
 
     <section class="grade-cartoes">
         <article class="cartao">
-            <h2>Base de acesso pronta</h2>
-            <p>Login, ativacao e administracao transferivel estao disponiveis.</p>
+            <h2>Acesso e credenciais</h2>
+            <p>Login, ativacao, administracao transferivel e recuperacao de senha estao disponiveis.</p>
         </article>
         <article class="cartao">
-            <h2>Proximo modulo</h2>
-            <p>O desenvolvimento funcional continuara pelo cadastro de pacientes.</p>
+            <h2>Pacientes</h2>
+            <p>Cadastre, consulte e acompanhe o historico de status dos pacientes.</p>
+            <a th:href="@{/pacientes}">Acessar pacientes</a>
         </article>
+        <article class="cartao"><h2>Voluntarios</h2><p>Cadastre, consulte e inative voluntarios.</p><a th:href="@{/voluntarios}">Acessar voluntarios</a></article>
+        <article class="cartao"><h2>Equipamentos</h2><p>Controle o estoque individual e os totais por categoria.</p><a th:href="@{/equipamentos}">Acessar equipamentos</a></article>
+        <article class="cartao"><h2>Emprestimos</h2><p>Registre emprestimos e devolucoes com controle de disponibilidade.</p><a th:href="@{/emprestimos}">Acessar emprestimos</a></article>
+        <article class="cartao"><h2>Doacoes</h2><p>Separe doacoes monetarias, equipamentos e outros bens.</p><a th:href="@{/doacoes}">Acessar doacoes</a></article>
+        <article class="cartao"><h2>Financeiro</h2><p>Acompanhe entradas, saidas, despesas e saldo.</p><a th:href="@{/financeiro}">Acessar financeiro</a></article>
+        <article class="cartao"><h2>Relatorios</h2><p>Consulte indicadores operacionais e financeiros por periodo.</p><a th:href="@{/relatorios}">Acessar relatorios</a></article>
     </section>
 </main>
 </body>

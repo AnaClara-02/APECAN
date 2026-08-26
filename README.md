@@ -3,6 +3,16 @@
 Sistema integrado para administracao e gerenciamento da APECAN, desenvolvido
 com Spring Boot, Thymeleaf, Spring Security, PostgreSQL e Flyway.
 
+## Funcionalidades
+
+- usuarios, ativacao, login, recuperacao e alteracao de senha;
+- administracao transferivel de acessos;
+- pacientes e historico de status;
+- voluntarios;
+- categorias, estoque individual de equipamentos, emprestimos e devolucoes;
+- doacoes monetarias, de equipamentos e de outros bens;
+- movimentacoes financeiras, despesas e relatorios.
+
 ## Configuracao local
 
 As credenciais locais ficam em `config/application-local.properties`, arquivo
@@ -53,7 +63,17 @@ Para encerrar, pressione `Ctrl+C` no mesmo terminal.
 .\mvnw.cmd test
 ```
 
-Os testes usam banco H2 isolado e não alteram o PostgreSQL local.
+Os testes rápidos usam banco H2 isolado e não alteram o PostgreSQL local. Com
+Docker disponível, o Testcontainers também cria um PostgreSQL descartável,
+executa todas as migrações Flyway e valida recursos específicos do PostgreSQL.
+
+## Banco de dados
+
+O esquema é criado e evoluído somente pelas migrações de
+`src/main/resources/db/migration`. Migrações aplicadas nunca devem ser
+editadas; uma mudança exige um novo arquivo `Vn__descricao.sql`.
+
+O Java de compilação e implantação é o Java 25 LTS.
 
 ## Regras de seguranca do acesso
 

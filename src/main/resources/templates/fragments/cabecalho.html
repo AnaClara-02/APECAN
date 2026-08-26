@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="cabecalho" th:fragment="cabecalho">
+    <a class="marca marca-clara" th:href="@{/inicio}">
+        <span class="marca-sigla">APECAN</span>
+        <span>Sistema integrado</span>
+    </a>
+    <nav class="navegacao" aria-label="Navegacao principal">
+        <a th:href="@{/inicio}">Inicio</a>
+        <a th:href="@{/pacientes}">Pacientes</a>
+        <a th:href="@{/voluntarios}">Voluntarios</a>
+        <a th:href="@{/equipamentos}">Equipamentos</a>
+        <a th:href="@{/emprestimos}">Emprestimos</a>
+        <a th:href="@{/doacoes}">Doacoes</a>
+        <a th:href="@{/financeiro}">Financeiro</a>
+        <a th:href="@{/relatorios}">Relatorios</a>
+        <a th:href="@{/minha-conta/senha}">Minha senha</a>
+        <form th:action="@{/logout}" method="post">
+            <button class="botao-link" type="submit">Sair</button>
+        </form>
+    </nav>
+</header>
+
+<div th:fragment="mensagens" aria-live="polite">
+    <div class="alerta alerta-sucesso" th:if="${sucesso}" th:text="${sucesso}"></div>
+    <div class="alerta alerta-erro" th:if="${erro}" th:text="${erro}"></div>
+</div>
+</body>
+</html>
