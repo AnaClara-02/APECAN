@@ -8,6 +8,7 @@ import com.aclg.apecan.shared.exception.ConflitoNegocioException;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.shared.exception.RecursoNaoEncontradoException;
 import com.aclg.apecan.shared.validation.CpfNormalizer;
+import com.aclg.apecan.shared.validation.TelefoneNormalizer;
 import com.aclg.apecan.usuario.dto.AlterarAcessoForm;
 import com.aclg.apecan.usuario.dto.EditarUsuarioForm;
 import com.aclg.apecan.usuario.dto.NovoUsuarioForm;
@@ -476,14 +477,7 @@ public class UsuarioService {
     }
 
     private String normalizarTelefone(String telefone) {
-        String digitos = telefone == null ? "" : telefone.replaceAll("\\D", "");
-        if (digitos.length() < 10 || digitos.length() > 15) {
-            throw new OperacaoInvalidaException(
-                "TELEFONE_INVALIDO",
-                "O telefone deve possuir entre 10 e 15 digitos."
-            );
-        }
-        return digitos;
+        return TelefoneNormalizer.normalizar(telefone);
     }
 
     private String normalizarTexto(String texto) {

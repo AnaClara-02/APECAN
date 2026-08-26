@@ -1,9 +1,9 @@
 package com.aclg.apecan.paciente.dto;
 
+import com.aclg.apecan.shared.validation.TelefoneBrasileiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -19,7 +19,7 @@ public class EditarPacienteForm {
 	private LocalDate dataNascimento;
 
 	@NotBlank(message = "Informe o telefone.")
-	@Pattern(regexp = "^[0-9() +.-]{10,20}$", message = "Informe um telefone valido.")
+	@TelefoneBrasileiro
 	private String telefone;
 
 	@NotBlank(message = "Informe o endereco.")

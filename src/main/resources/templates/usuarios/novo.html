@@ -6,6 +6,7 @@
     <title>Novo usuario | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script defer th:src="@{/js/cpf-mask.js}"></script>
+    <script defer th:src="@{/js/telefone-mask.js}"></script>
 </head>
 <body>
 <header class="cabecalho">
@@ -42,7 +43,7 @@
         <span class="erro-campo" th:errors="*{email}"></span>
 
         <label for="telefone">Telefone</label>
-        <input id="telefone" type="tel" th:field="*{telefone}" maxlength="20" required>
+        <input id="telefone" type="tel" th:field="*{telefone}" data-telefone autocomplete="tel" required>
         <span class="erro-campo" th:errors="*{telefone}"></span>
 
         <div class="acoes">

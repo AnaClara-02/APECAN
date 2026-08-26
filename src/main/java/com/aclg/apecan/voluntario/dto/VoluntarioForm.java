@@ -1,10 +1,10 @@
 package com.aclg.apecan.voluntario.dto;
 
 import com.aclg.apecan.shared.validation.CpfValido;
+import com.aclg.apecan.shared.validation.TelefoneBrasileiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
@@ -23,7 +23,7 @@ public class VoluntarioForm {
 	private LocalDate dataNascimento;
 
 	@NotBlank
-	@Pattern(regexp = "^[0-9() +.-]{10,20}$")
+	@TelefoneBrasileiro
 	private String telefone;
 
 	@NotBlank

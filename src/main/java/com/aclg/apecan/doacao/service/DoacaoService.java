@@ -72,13 +72,13 @@ public class DoacaoService {
 	@Transactional
 	public Long registrar(@Valid DoacaoForm f) {
 		Usuario u = responsavel();
+		validar(f);
 		Doacao d = switch (f.getTipo()) {
 			case MONETARIA -> Doacao.monetaria(f.getDataDoacao(), texto(f.getFonteDoacao()), u);
 			case EQUIPAMENTO -> Doacao.equipamento(f.getDataDoacao(), texto(f.getFonteDoacao()), u);
 			case OUTRO_BEM -> Doacao.outroBem(f.getQuantidade(), texto(f.getUnidade()), f.getDataDoacao(),
 					texto(f.getFonteDoacao()), u);
 		};
-		validar(f);
 		doacoes.saveAndFlush(d);
 		if (f.getTipo() == TipoDoacao.MONETARIA)
 			movimentos.save(new MovimentacaoFinanceira(TipoMovimentacao.ENTRADA, f.getValor(), f.getDataDoacao(),

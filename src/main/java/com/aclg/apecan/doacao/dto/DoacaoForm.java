@@ -20,6 +20,7 @@ public class DoacaoForm {
 	private String fonteDoacao;
 
 	@DecimalMin("0.01")
+	@Digits(integer = 10, fraction = 2)
 	private BigDecimal valor;
 
 	@DecimalMin("0.001")

@@ -12,6 +12,7 @@ import com.aclg.apecan.shared.exception.*;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +76,13 @@ public class EmprestimoService {
 		eq.emprestar(u);
 		EmprestimoEquipamento e = new EmprestimoEquipamento(eq, p, f.getDataEmprestimo(), f.getDataPrevistaDevolucao(),
 				u, limpar(f.getObservacao()));
-		emprestimos.saveAndFlush(e);
+		try {
+			emprestimos.saveAndFlush(e);
+		}
+		catch (DataIntegrityViolationException exception) {
+			throw new ConflitoNegocioException("EMPRESTIMO_CONCORRENTE",
+					"O equipamento acabou de ser emprestado em outra operacao. Atualize a pagina e escolha outro.");
+		}
 		return e.getId();
 	}
 

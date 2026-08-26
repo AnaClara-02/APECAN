@@ -37,7 +37,7 @@ class PostgreSqlFlywayIntegrationTests {
 				   AND table_name = 'vw_resumo_equipamentos_por_categoria'
 				""", Integer.class);
 
-		assertThat(migracoes).isEqualTo(6);
+		assertThat(migracoes).isEqualTo(7);
 		assertThat(views).isEqualTo(1);
 
 		Long usuarioId = jdbcTemplate.queryForObject("""
@@ -48,7 +48,7 @@ class PostgreSqlFlywayIntegrationTests {
 				) VALUES (
 				    'Usuario de teste', '{bcrypt}hash-de-teste', 'teste.integracao',
 				    '00000000000', 'integracao@example.invalid', '/images/usuario-padrao.svg',
-				    '11999999999', 'ADMINISTRADOR', 'ATIVO', FALSE, CURRENT_TIMESTAMP,
+				    '5511999999999', 'ADMINISTRADOR', 'ATIVO', FALSE, CURRENT_TIMESTAMP,
 				    CURRENT_TIMESTAMP
 				) RETURNING id_usuario
 				""", Long.class);
@@ -58,7 +58,7 @@ class PostgreSqlFlywayIntegrationTests {
 				    local_tratamento, status, criado_por_usuario_id
 				) VALUES (
 				    'Paciente de teste', '11111111111', DATE '2000-01-01',
-				    '11988888888', 'Endereco de teste', 'Local de teste', 'ATIVO', ?
+				    '5511988888888', 'Endereco de teste', 'Local de teste', 'ATIVO', ?
 				) RETURNING id_paciente
 				""", Long.class, usuarioId);
 		Long categoriaId = jdbcTemplate.queryForObject("""

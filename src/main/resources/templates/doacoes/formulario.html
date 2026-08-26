@@ -1,1 +1,119 @@
-<!DOCTYPE html><html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nova doacao | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head><body><header th:replace="~{fragments/cabecalho :: cabecalho}"></header><main class="conteudo cartao"><h1>Nova doacao</h1><p class="texto-secundario">Preencha apenas o bloco correspondente ao tipo. Doacao monetaria cria entrada; equipamentos criam unidades individuais no estoque.</p><form class="formulario" th:action="@{/doacoes}" th:object="${doacaoForm}" method="post"><div class="alerta alerta-erro" th:each="e:${#fields.globalErrors()}" th:text="${e}"></div><label>Tipo</label><select th:field="*{tipo}" required><option value="">Selecione</option><option th:each="t:${tipos}" th:value="${t}" th:text="${t}"></option></select><label>Data</label><input type="date" th:field="*{dataDoacao}" required><label>Fonte/doador</label><input th:field="*{fonteDoacao}" maxlength="150" required><h2>Monetaria</h2><label>Valor</label><input type="number" step="0.01" min="0.01" th:field="*{valor}"><h2>Equipamentos</h2><label>Categoria</label><select th:field="*{categoriaId}"><option value="">Selecione</option><option th:each="c:${categorias}" th:value="${c.id}" th:text="${c.nome}"></option></select><label>Conservacao</label><select th:field="*{estadoConservacao}"><option value="">Selecione</option><option th:each="e:${conservacoes}" th:value="${e}" th:text="${e}"></option></select><label>Quantidade de unidades</label><input type="number" min="1" max="100" th:field="*{quantidadeEquipamentos}"><h2>Outro bem</h2><label>Quantidade</label><input type="number" step="0.001" min="0.001" th:field="*{quantidade}"><label>Unidade</label><input th:field="*{unidade}" maxlength="30"><h2>Participantes voluntarios (opcional)</h2><label>Doador</label><select th:field="*{doadorId}"><option value="">Nenhum</option><option th:each="v:${voluntarios}" th:value="${v.id}" th:text="${v.nome}"></option></select><label>Responsavel</label><select th:field="*{responsavelId}"><option value="">Nenhum</option><option th:each="v:${voluntarios}" th:value="${v.id}" th:text="${v.nome}"></option></select><button class="botao botao-primario">Registrar doacao</button></form></main></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nova doacao | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/doacao-form.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main class="conteudo conteudo-estreito">
+    <section class="cabecalho-pagina">
+        <div>
+            <p class="rotulo">Doacoes</p>
+            <h1>Nova doacao</h1>
+            <p class="texto-secundario">Selecione o tipo para visualizar somente os campos correspondentes.</p>
+        </div>
+        <a class="botao botao-secundario" th:href="@{/doacoes}">Voltar</a>
+    </section>
+
+    <form class="cartao formulario" th:action="@{/doacoes}" th:object="${doacaoForm}" method="post"
+          data-form-doacao>
+        <div class="alerta alerta-erro" th:if="${#fields.hasAnyErrors()}" role="alert">
+            <strong>Nao foi possivel registrar a doacao.</strong>
+            <ul>
+                <li th:each="erro : ${#fields.allErrors()}" th:text="${erro}"></li>
+            </ul>
+        </div>
+
+        <label for="tipo">Tipo da doacao</label>
+        <select id="tipo" th:field="*{tipo}" data-tipo-doacao required>
+            <option value="">Selecione</option>
+            <option th:each="tipo : ${tipos}" th:value="${tipo}"
+                    th:text="${tipo.name() == 'MONETARIA' ? 'Monetaria' : (tipo.name() == 'EQUIPAMENTO' ? 'Equipamento' : 'Outro bem')}"></option>
+        </select>
+        <span class="erro-campo" th:errors="*{tipo}"></span>
+
+        <label for="dataDoacao">Data da doacao</label>
+        <input id="dataDoacao" type="date" th:field="*{dataDoacao}" required>
+        <span class="erro-campo" th:errors="*{dataDoacao}"></span>
+
+        <label for="fonteDoacao">Fonte ou doador</label>
+        <input id="fonteDoacao" type="text" th:field="*{fonteDoacao}" maxlength="150" required>
+        <span class="erro-campo" th:errors="*{fonteDoacao}"></span>
+
+        <section class="grupo-doacao" data-grupo-doacao="MONETARIA"
+                 th:hidden="${doacaoForm.tipo == null || doacaoForm.tipo.name() != 'MONETARIA'}">
+            <h2>Doacao monetaria</h2>
+            <label for="valor">Valor</label>
+            <input id="valor" type="text" th:field="*{valor}" data-moeda-brl data-obrigatorio-tipo
+                   inputmode="numeric" autocomplete="off" placeholder="R$ 0,00">
+            <span class="erro-campo" th:errors="*{valor}"></span>
+        </section>
+
+        <section class="grupo-doacao" data-grupo-doacao="EQUIPAMENTO"
+                 th:hidden="${doacaoForm.tipo == null || doacaoForm.tipo.name() != 'EQUIPAMENTO'}">
+            <h2>Equipamentos</h2>
+
+            <label for="categoriaId">Categoria</label>
+            <select id="categoriaId" th:field="*{categoriaId}" data-obrigatorio-tipo>
+                <option value="">Selecione</option>
+                <option th:each="categoria : ${categorias}" th:value="${categoria.id}"
+                        th:text="${categoria.nome}"></option>
+            </select>
+            <span class="erro-campo" th:errors="*{categoriaId}"></span>
+
+            <label for="estadoConservacao">Estado de conservacao</label>
+            <select id="estadoConservacao" th:field="*{estadoConservacao}" data-obrigatorio-tipo>
+                <option value="">Selecione</option>
+                <option th:each="conservacao : ${conservacoes}" th:value="${conservacao}"
+                        th:text="${conservacao}"></option>
+            </select>
+            <span class="erro-campo" th:errors="*{estadoConservacao}"></span>
+
+            <label for="quantidadeEquipamentos">Quantidade de unidades</label>
+            <input id="quantidadeEquipamentos" type="number" min="1" max="100"
+                   th:field="*{quantidadeEquipamentos}" data-obrigatorio-tipo>
+            <span class="erro-campo" th:errors="*{quantidadeEquipamentos}"></span>
+        </section>
+
+        <section class="grupo-doacao" data-grupo-doacao="OUTRO_BEM"
+                 th:hidden="${doacaoForm.tipo == null || doacaoForm.tipo.name() != 'OUTRO_BEM'}">
+            <h2>Outro bem</h2>
+
+            <label for="quantidade">Quantidade</label>
+            <input id="quantidade" type="number" step="0.001" min="0.001" th:field="*{quantidade}"
+                   data-obrigatorio-tipo>
+            <span class="erro-campo" th:errors="*{quantidade}"></span>
+
+            <label for="unidade">Unidade</label>
+            <input id="unidade" type="text" th:field="*{unidade}" maxlength="30" data-obrigatorio-tipo
+                   placeholder="Ex.: kg, caixa, pacote">
+            <span class="erro-campo" th:errors="*{unidade}"></span>
+        </section>
+
+        <section>
+            <h2>Participantes voluntarios <small>(opcional)</small></h2>
+
+            <label for="doadorId">Doador</label>
+            <select id="doadorId" th:field="*{doadorId}">
+                <option value="">Nenhum</option>
+                <option th:each="voluntario : ${voluntarios}" th:value="${voluntario.id}"
+                        th:text="${voluntario.nome}"></option>
+            </select>
+
+            <label for="responsavelId">Responsavel</label>
+            <select id="responsavelId" th:field="*{responsavelId}">
+                <option value="">Nenhum</option>
+                <option th:each="voluntario : ${voluntarios}" th:value="${voluntario.id}"
+                        th:text="${voluntario.nome}"></option>
+            </select>
+        </section>
+
+        <button class="botao botao-primario" type="submit">Registrar doacao</button>
+    </form>
+</main>
+</body>
+</html>

@@ -73,6 +73,9 @@ h2 { font-size: 1.2rem; }
     background: #fff;
 }
 .formulario textarea { min-height: 90px; resize: vertical; }
+.grupo-doacao[hidden] { display: none; }
+.grupo-doacao { border: 1px solid var(--borda); border-radius: 10px; padding: 1rem; margin-top: .5rem; }
+.grupo-doacao h2 { margin-top: 0; }
 .campo-link { min-height: 110px; resize: vertical; margin-top: .5rem; }
 .formulario input:focus, .formulario textarea:focus, .formulario select:focus,
 .filtros input:focus, .filtros select:focus { outline: 3px solid rgb(23 107 85 / 16%); border-color: var(--primaria); }

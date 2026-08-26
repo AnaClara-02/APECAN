@@ -61,4 +61,10 @@ public class EmprestimoForm {
 		observacao = v;
 	}
 
+	@AssertTrue(message = "A previsao de devolucao nao pode ser anterior a data do emprestimo.")
+	public boolean isPeriodoValido() {
+		return dataEmprestimo == null || dataPrevistaDevolucao == null
+				|| !dataPrevistaDevolucao.isBefore(dataEmprestimo);
+	}
+
 }

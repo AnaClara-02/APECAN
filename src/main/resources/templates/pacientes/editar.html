@@ -4,6 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Editar paciente | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/telefone-mask.js}"></script>
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
@@ -13,7 +14,7 @@
         <div class="alerta alerta-erro" th:if="${#fields.hasGlobalErrors()}" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
         <label for="nome">Nome</label><input id="nome" th:field="*{nome}" maxlength="150" required><span class="erro-campo" th:errors="*{nome}"></span>
         <label for="dataNascimento">Data de nascimento</label><input id="dataNascimento" type="date" th:field="*{dataNascimento}" required><span class="erro-campo" th:errors="*{dataNascimento}"></span>
-        <label for="telefone">Telefone</label><input id="telefone" type="tel" th:field="*{telefone}" maxlength="20" required><span class="erro-campo" th:errors="*{telefone}"></span>
+        <label for="telefone">Telefone</label><input id="telefone" type="tel" th:field="*{telefone}" data-telefone autocomplete="tel" required><span class="erro-campo" th:errors="*{telefone}"></span>
         <label for="endereco">Endereco</label><input id="endereco" th:field="*{endereco}" maxlength="255" required><span class="erro-campo" th:errors="*{endereco}"></span>
         <label for="localTratamento">Local de tratamento</label><input id="localTratamento" th:field="*{localTratamento}" maxlength="150" required><span class="erro-campo" th:errors="*{localTratamento}"></span>
         <div class="acoes"><button class="botao botao-primario" type="submit">Salvar</button><a class="botao botao-secundario" th:href="@{/pacientes/{id}(id=${paciente.id})}">Cancelar</a></div>

@@ -6,6 +6,7 @@ import com.aclg.apecan.shared.exception.RecursoNaoEncontradoException;
 import com.aclg.apecan.shared.validation.CpfFormatter;
 import com.aclg.apecan.shared.validation.CpfNormalizer;
 import com.aclg.apecan.shared.validation.TelefoneNormalizer;
+import com.aclg.apecan.shared.validation.TelefoneFormatter;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
 import com.aclg.apecan.voluntario.dto.VoluntarioDto;
@@ -73,7 +74,7 @@ public class VoluntarioService {
 		f.setNome(v.getNome());
 		f.setCpf(v.getCpf());
 		f.setDataNascimento(v.getDataNascimento());
-		f.setTelefone(v.getTelefone());
+		f.setTelefone(TelefoneFormatter.formatar(v.getTelefone()));
 		f.setEndereco(v.getEndereco());
 		return f;
 	}
@@ -113,7 +114,7 @@ public class VoluntarioService {
 
 	private VoluntarioDto dto(Voluntario v) {
 		return new VoluntarioDto(v.getId(), v.getNome(), CpfFormatter.mascarar(v.getCpf()), v.getDataNascimento(),
-				v.getTelefone(), v.getEndereco(), v.getStatus());
+				TelefoneFormatter.formatar(v.getTelefone()), v.getEndereco(), v.getStatus());
 	}
 
 }
