@@ -75,6 +75,7 @@ class FluxoLoginTests {
 			.andExpect(view().name("inicio"))
 			.andExpect(model().attributeExists("usuarioLogado", "caminhoAtual", "resumo"))
 			.andExpect(content().string(containsString("Pacientes ativos")))
+			.andExpect(content().string(containsString("/images/logo-apecan.png")))
 			.andExpect(content().string(containsString("Administrador Web")));
 
 		mockMvc.perform(get("/usuarios").session(sessao))
@@ -113,7 +114,13 @@ class FluxoLoginTests {
 
 	@Test
 	void loginEAtivacaoDevemPossuirPaginasPublicasELogoutGetNaoDeveExistir() throws Exception {
-		mockMvc.perform(get("/login")).andExpect(status().isOk()).andExpect(view().name("login"));
+		mockMvc.perform(get("/login"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("login"))
+			.andExpect(content().string(containsString("/images/logo-apecan.png")))
+			.andExpect(content().string(containsString("/js/login.js")))
+			.andExpect(content().string(containsString("data-alternar-senha")))
+			.andExpect(content().string(containsString("aria-controls=\"senha\"")));
 
 		mockMvc.perform(get("/ativar-conta")).andExpect(status().isOk()).andExpect(view().name("ativar-conta"));
 

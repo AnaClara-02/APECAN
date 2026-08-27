@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Entrar | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script defer th:src="@{/js/login.js}"></script>
 </head>
 <body class="pagina-centralizada">
 <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
@@ -33,7 +34,13 @@
         <input id="login" name="login" type="text" autocomplete="username" required autofocus>
 
         <label for="senha">Senha</label>
-        <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+        <div class="campo-senha">
+            <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+            <button class="alternar-senha" type="button" data-alternar-senha aria-controls="senha"
+                    aria-pressed="false" aria-label="Mostrar senha">
+                <span data-rotulo-senha>Mostrar</span>
+            </button>
+        </div>
 
         <button class="botao botao-primario" type="submit">Entrar com segurança</button>
     </form>

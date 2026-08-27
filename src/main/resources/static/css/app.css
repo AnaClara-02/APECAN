@@ -70,7 +70,8 @@ svg { display: block; }
 .marca { display: flex; align-items: center; gap: .75rem; color: var(--texto); text-decoration: none; }
 .marca:hover { color: var(--texto); }
 .marca > span:last-child { display: flex; flex-direction: column; line-height: 1.15; }
-.marca-simbolo { display: grid; width: 42px; height: 42px; place-items: center; flex: 0 0 auto; border-radius: 14px 14px 14px 5px; background: linear-gradient(145deg, var(--primaria), #8b80bd); color: #fff; font-weight: 800; font-size: 1.25rem; box-shadow: 0 8px 18px rgb(98 91 145 / 22%); }
+.marca-logo { display: block; height: auto; object-fit: contain; }
+.marca-logo-sistema { width: 48px; flex: 0 0 48px; filter: drop-shadow(0 6px 10px rgb(72 64 112 / 10%)); }
 .marca-sigla { font-size: 1rem; font-weight: 800; letter-spacing: .09em; }
 .marca small { margin-top: .2rem; color: var(--texto-secundario); font-size: .73rem; }
 .menu-lateral { flex: 1; }
@@ -128,6 +129,11 @@ main.conteudo.cartao { width: auto; max-width: 780px; margin-top: clamp(1.5rem, 
 .formulario input, .formulario textarea, .formulario select, .filtros input:not([type="checkbox"]), .filtros select, .campo-link {
     width: 100%; min-height: 46px; padding: .72rem .85rem; border: 1px solid #cbc7d8; border-radius: 10px; background: #fff; color: var(--texto); transition: border-color .16s ease, box-shadow .16s ease;
 }
+.campo-senha { position: relative; }
+.campo-senha input { padding-right: 6.4rem; }
+.alternar-senha { position: absolute; top: 50%; right: .4rem; min-height: 36px; padding: .35rem .65rem; transform: translateY(-50%); border: 0; border-radius: 8px; background: transparent; color: var(--secundaria-hover); font-size: .82rem; font-weight: 800; cursor: pointer; }
+.alternar-senha:hover { background: var(--azul-claro); }
+.alternar-senha:focus-visible { outline-offset: 1px; }
 .formulario textarea { min-height: 108px; resize: vertical; }
 .formulario input:hover, .formulario textarea:hover, .formulario select:hover, .filtros input:hover, .filtros select:hover { border-color: #aaa5bc; }
 .formulario input:focus, .formulario textarea:focus, .formulario select:focus, .filtros input:focus, .filtros select:focus { border-color: var(--secundaria); outline: 0; box-shadow: 0 0 0 3px rgb(66 116 147 / 16%); }
@@ -196,8 +202,9 @@ td a { font-weight: 800; }
 .pagina-centralizada::after { right: -120px; bottom: -170px; background: rgb(190 222 239 / 48%); }
 .autenticacao, .ativacao-local { position: relative; z-index: 1; width: min(100%, 460px); padding: clamp(1.5rem, 4vw, 2.2rem); }
 .ativacao-local { width: min(100%, 720px); }
-.autenticacao .marca { margin-bottom: 2rem; }
-.autenticacao .marca-sigla { font-size: 1.15rem; }
+.marca-publica { justify-content: center; }
+.marca-logo-publica { width: 132px; max-width: 42vw; filter: drop-shadow(0 10px 20px rgb(72 64 112 / 12%)); }
+.autenticacao .marca-publica { margin-bottom: 1.5rem; }
 .autenticacao .botao { width: 100%; }
 .autenticacao-rodape { margin: 1.2rem 0 0; text-align: center; }
 
