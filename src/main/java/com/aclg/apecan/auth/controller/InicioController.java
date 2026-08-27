@@ -1,6 +1,7 @@
 package com.aclg.apecan.auth.controller;
 
 import com.aclg.apecan.usuario.service.UsuarioService;
+import com.aclg.apecan.relatorio.service.RelatorioService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,10 +9,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class InicioController {
 
-    private final UsuarioService usuarioService;
+	private final UsuarioService usuarioService;
+	private final RelatorioService relatorioService;
 
-    public InicioController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
+	public InicioController(UsuarioService usuarioService, RelatorioService relatorioService) {
+		this.usuarioService = usuarioService;
+		this.relatorioService = relatorioService;
     }
 
     @GetMapping("/")
@@ -21,11 +24,11 @@ public class InicioController {
 
     @GetMapping("/inicio")
     String inicio(Model model) {
-        model.addAttribute("usuario", usuarioService.buscarAtual());
-        model.addAttribute(
-            "quantidadeAdministradores",
-            usuarioService.quantidadeAdministradoresAtivos()
-        );
-        return "inicio";
+		model.addAttribute(
+			"quantidadeAdministradores",
+			usuarioService.quantidadeAdministradoresAtivos()
+		);
+		model.addAttribute("resumo", relatorioService.resumoInicio());
+		return "inicio";
     }
 }

@@ -7,7 +7,9 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="pagina-centralizada">
-<main class="cartao autenticacao">
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+<main id="conteudo-principal" class="cartao autenticacao">
+    <div th:replace="~{fragments/cabecalho :: marca-publica}"></div>
     <h1>Recuperar senha</h1>
     <p class="texto-secundario">Informe o e-mail cadastrado. A resposta será a mesma mesmo quando a conta não existir.</p>
     <div class="alerta alerta-sucesso" th:if="${solicitacaoConcluida}">

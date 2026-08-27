@@ -46,7 +46,7 @@ public class SecurityConfig {
 
 		http.authorizeHttpRequests(autorizacao -> autorizacao
 			.requestMatchers("/login", "/ativar-conta", "/esqueci-senha", "/redefinir-senha", "/error", "/error/**",
-					"/css/**", "/js/**", "/images/**", "/actuator/health", "/actuator/health/**")
+					"/css/**", "/js/**", "/images/**", "/fonts/**", "/actuator/health", "/actuator/health/**")
 			.permitAll()
 			.requestMatchers("/usuarios/**", "/configuracoes/**", "/api/usuarios/**", "/api/configuracoes/**",
 					"/actuator/info")

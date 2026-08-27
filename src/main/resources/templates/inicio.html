@@ -3,63 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Inicio | APECAN</title>
+    <title>Início | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<header class="cabecalho">
-    <a class="marca marca-clara" th:href="@{/inicio}">
-        <span class="marca-sigla">APECAN</span>
-        <span>Sistema integrado</span>
-    </a>
-    <nav class="navegacao">
-        <a th:href="@{/pacientes}">Pacientes</a>
-        <a th:href="@{/voluntarios}">Voluntarios</a>
-        <a th:href="@{/equipamentos}">Equipamentos</a>
-        <a th:href="@{/emprestimos}">Emprestimos</a>
-        <a th:href="@{/doacoes}">Doacoes</a>
-        <a th:href="@{/financeiro}">Financeiro</a>
-        <a th:href="@{/relatorios}">Relatorios</a>
-        <a th:href="@{/minha-conta/senha}">Minha senha</a>
-        <a th:if="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'}" th:href="@{/usuarios}">Usuarios</a>
-        <form th:action="@{/logout}" method="post">
-            <button class="botao-link" type="submit">Sair</button>
-        </form>
-    </nav>
-</header>
-
-<main class="conteudo">
-    <section class="cabecalho-pagina">
-        <div>
-            <p class="rotulo">Bem-vindo</p>
-            <h1 th:text="${usuario.nome}">Usuario</h1>
-            <p class="texto-secundario">
-                Perfil: <span th:text="${usuario.tipoPerfil}">USUARIO</span>
-            </p>
-        </div>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo">
+    <section class="boas-vindas" aria-labelledby="titulo-inicio">
+        <p class="rotulo">Bem-vindo ao sistema</p>
+        <h1 id="titulo-inicio">Olá, <span th:text="${usuarioLogado.nome()}">Usuário</span></h1>
+        <p>Acompanhe o atendimento e acesse rapidamente as atividades da associação.</p>
     </section>
 
-    <div class="alerta alerta-aviso"
-         th:if="${usuario.tipoPerfil.name() == 'ADMINISTRADOR' and quantidadeAdministradores < 2}">
-        Cadastre e promova outro administrador para garantir a continuidade do acesso.
+    <div class="alerta alerta-aviso" role="status"
+         th:if="${usuarioLogado.administrador() and quantidadeAdministradores < 2}">
+        Cadastre e promova outro administrador para garantir a continuidade segura do acesso.
     </div>
 
-    <section class="grade-cartoes">
-        <article class="cartao">
-            <h2>Acesso e credenciais</h2>
-            <p>Login, ativacao, administracao transferivel e recuperacao de senha estao disponiveis.</p>
+    <section class="grade-indicadores" aria-label="Resumo da associação">
+        <article class="indicador">
+            <span class="indicador-rotulo">Pacientes ativos</span>
+            <strong class="indicador-valor" th:text="${resumo.pacientesAtivos()}">0</strong>
+            <span class="indicador-ajuda">Em acompanhamento</span>
         </article>
-        <article class="cartao">
-            <h2>Pacientes</h2>
-            <p>Cadastre, consulte e acompanhe o historico de status dos pacientes.</p>
-            <a th:href="@{/pacientes}">Acessar pacientes</a>
+        <article class="indicador">
+            <span class="indicador-rotulo">Empréstimos abertos</span>
+            <strong class="indicador-valor" th:text="${resumo.emprestimosAbertos()}">0</strong>
+            <span class="indicador-ajuda">Equipamentos em uso</span>
         </article>
-        <article class="cartao"><h2>Voluntarios</h2><p>Cadastre, consulte e inative voluntarios.</p><a th:href="@{/voluntarios}">Acessar voluntarios</a></article>
-        <article class="cartao"><h2>Equipamentos</h2><p>Controle o estoque individual e os totais por categoria.</p><a th:href="@{/equipamentos}">Acessar equipamentos</a></article>
-        <article class="cartao"><h2>Emprestimos</h2><p>Registre emprestimos e devolucoes com controle de disponibilidade.</p><a th:href="@{/emprestimos}">Acessar emprestimos</a></article>
-        <article class="cartao"><h2>Doacoes</h2><p>Separe doacoes monetarias, equipamentos e outros bens.</p><a th:href="@{/doacoes}">Acessar doacoes</a></article>
-        <article class="cartao"><h2>Financeiro</h2><p>Acompanhe entradas, saidas, despesas e saldo.</p><a th:href="@{/financeiro}">Acessar financeiro</a></article>
-        <article class="cartao"><h2>Relatorios</h2><p>Consulte indicadores operacionais e financeiros por periodo.</p><a th:href="@{/relatorios}">Acessar relatorios</a></article>
+        <article class="indicador">
+            <span class="indicador-rotulo">Empréstimos atrasados</span>
+            <strong class="indicador-valor" th:text="${resumo.emprestimosAtrasados()}">0</strong>
+            <span class="indicador-ajuda">Precisam de atenção</span>
+        </article>
+        <article class="indicador">
+            <span class="indicador-rotulo">Saldo acumulado</span>
+            <strong class="indicador-valor" th:text="|R$ ${#numbers.formatDecimal(resumo.saldo(), 1, 'POINT', 2, 'COMMA')}|">R$ 0,00</strong>
+            <span class="indicador-ajuda">Entradas menos saídas</span>
+        </article>
+    </section>
+
+    <section aria-labelledby="titulo-atalhos">
+        <div class="secao-titulo">
+            <div><p class="rotulo">Acesso rápido</p><h2 id="titulo-atalhos">O que você precisa fazer?</h2></div>
+        </div>
+        <div class="atalhos">
+            <a class="atalho" th:href="@{/pacientes/novo}"><span>Cadastrar paciente</span><svg aria-hidden="true"><use th:href="@{/images/icons.svg#seta}"></use></svg></a>
+            <a class="atalho" th:href="@{/emprestimos/novo}"><span>Novo empréstimo</span><svg aria-hidden="true"><use th:href="@{/images/icons.svg#seta}"></use></svg></a>
+            <a class="atalho" th:href="@{/doacoes/nova}"><span>Registrar doação</span><svg aria-hidden="true"><use th:href="@{/images/icons.svg#seta}"></use></svg></a>
+            <a class="atalho" th:href="@{/financeiro/nova}"><span>Nova movimentação</span><svg aria-hidden="true"><use th:href="@{/images/icons.svg#seta}"></use></svg></a>
+        </div>
     </section>
 </main>
 </body>

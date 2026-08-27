@@ -9,17 +9,17 @@
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main class="conteudo conteudo-estreito">
-    <section class="cabecalho-pagina"><div><p class="rotulo">Pacientes</p><h1>Novo paciente</h1></div></section>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <section class="cabecalho-pagina"><div><p class="rotulo">Pacientes</p><h1>Novo paciente</h1></div><a class="botao botao-secundario" th:href="@{/pacientes}">Voltar</a></section>
     <form class="cartao formulario" th:action="@{/pacientes}" th:object="${novoPacienteForm}" method="post">
         <div class="alerta alerta-erro" th:if="${#fields.hasGlobalErrors()}" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
         <label for="nome">Nome</label><input id="nome" th:field="*{nome}" maxlength="150" required><span class="erro-campo" th:errors="*{nome}"></span>
         <label for="cpf">CPF</label><input id="cpf" th:field="*{cpf}" data-cpf inputmode="numeric" required><span class="erro-campo" th:errors="*{cpf}"></span>
         <label for="dataNascimento">Data de nascimento</label><input id="dataNascimento" type="date" th:field="*{dataNascimento}" required><span class="erro-campo" th:errors="*{dataNascimento}"></span>
         <label for="telefone">Telefone</label><input id="telefone" type="tel" th:field="*{telefone}" data-telefone autocomplete="tel" required><span class="erro-campo" th:errors="*{telefone}"></span>
-        <label for="endereco">Endereco</label><input id="endereco" th:field="*{endereco}" maxlength="255" required><span class="erro-campo" th:errors="*{endereco}"></span>
+        <label for="endereco">Endereço</label><input id="endereco" th:field="*{endereco}" maxlength="255" autocomplete="street-address" required><span class="erro-campo" th:errors="*{endereco}"></span>
         <label for="localTratamento">Local de tratamento</label><input id="localTratamento" th:field="*{localTratamento}" maxlength="150" required><span class="erro-campo" th:errors="*{localTratamento}"></span>
-        <div class="acoes"><button class="botao botao-primario" type="submit">Cadastrar</button><a class="botao botao-secundario" th:href="@{/pacientes}">Cancelar</a></div>
+        <div class="acoes"><button class="botao botao-primario" type="submit">Cadastrar paciente</button><a class="botao" th:href="@{/pacientes}">Cancelar</a></div>
     </form>
 </main>
 </body>

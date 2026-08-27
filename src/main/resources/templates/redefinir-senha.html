@@ -7,7 +7,9 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="pagina-centralizada">
-<main class="cartao autenticacao">
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+<main id="conteudo-principal" class="cartao autenticacao">
+    <div th:replace="~{fragments/cabecalho :: marca-publica}"></div>
     <h1>Definir nova senha</h1>
     <div class="alerta alerta-erro" th:if="${erroRedefinicao}" th:text="${erroRedefinicao}"></div>
     <section th:if="${tokenValido}">

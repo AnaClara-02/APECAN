@@ -55,9 +55,28 @@ public class RelatorioService {
 				entradas, saidas, entradas.subtract(saidas));
 	}
 
+	@Transactional(readOnly = true)
+	public ResumoInicio resumoInicio() {
+		BigDecimal entradas = movimentos.total(TipoMovimentacao.ENTRADA, null, null);
+		BigDecimal saidas = movimentos.total(TipoMovimentacao.SAIDA, null, null);
+		return new ResumoInicio(
+			pacientes.countByStatus(StatusPaciente.ATIVO),
+			emprestimos.countByDataDevolucaoIsNull(),
+			emprestimos.countAtrasados(LocalDate.now(clock)),
+			entradas.subtract(saidas));
+	}
+
+	public record ResumoInicio(long pacientesAtivos, long emprestimosAbertos,
+			long emprestimosAtrasados, BigDecimal saldo) {
+	}
+
 	public record Resultado(Map<StatusPaciente, Long> pacientes, List<ResumoCategoriaEquipamento> equipamentos,
 			long emprestimosAbertos, long emprestimosAtrasados, long emprestimosConcluidos,
 			Map<TipoDoacao, Long> doacoes, BigDecimal entradas, BigDecimal saidas, BigDecimal saldo) {
+
+		public long pacientesAtivos() {
+			return pacientes.getOrDefault(StatusPaciente.ATIVO, 0L);
+		}
 	}
 
 }

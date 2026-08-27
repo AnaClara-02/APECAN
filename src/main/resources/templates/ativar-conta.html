@@ -7,11 +7,9 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="pagina-centralizada">
-<main class="cartao autenticacao">
-    <div class="marca">
-        <span class="marca-sigla">APECAN</span>
-        <span>Ativacao segura de conta</span>
-    </div>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+<main id="conteudo-principal" class="cartao autenticacao">
+    <div th:replace="~{fragments/cabecalho :: marca-publica}"></div>
 
     <h1>Defina sua senha</h1>
 
@@ -19,7 +17,7 @@
 
     <div th:if="${tokenValido}">
         <p>
-            Ola, <strong th:text="${tokenInfo.nomeUsuario}">usuario</strong>.
+            Olá, <strong th:text="${tokenInfo.nomeUsuario}">usuário</strong>.
             Crie sua senha definitiva para concluir a ativacao.
         </p>
         <p class="texto-secundario">

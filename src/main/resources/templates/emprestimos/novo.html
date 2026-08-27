@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Novo emprestimo | APECAN</title>
+    <title>Novo empréstimo | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main class="conteudo conteudo-estreito">
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
     <section class="cabecalho-pagina">
-        <div><p class="rotulo">Emprestimos</p><h1>Novo emprestimo</h1></div>
+        <div><p class="rotulo">Empréstimos</p><h1>Novo empréstimo</h1></div>
         <a class="botao botao-secundario" th:href="@{/emprestimos}">Voltar</a>
     </section>
 
     <div class="alerta alerta-aviso" th:if="${#lists.isEmpty(equipamentos)}">
-        Nao ha equipamentos ativos disponiveis para emprestimo.
+        Não há equipamentos ativos disponíveis para empréstimo.
     </div>
     <div class="alerta alerta-aviso" th:if="${#lists.isEmpty(pacientes)}">
-        Nao ha pacientes ativos que possam receber um equipamento.
+        Não há pacientes ativos que possam receber um equipamento.
     </div>
 
     <form class="cartao formulario" th:action="@{/emprestimos}" th:object="${emprestimoForm}" method="post">
         <div class="alerta alerta-erro" th:if="${#fields.hasAnyErrors()}" role="alert">
-            <strong>Nao foi possivel registrar o emprestimo.</strong>
+            <strong>Não foi possível registrar o empréstimo.</strong>
             <ul>
                 <li th:each="erro : ${#fields.allErrors()}" th:text="${erro}"></li>
             </ul>
@@ -45,21 +45,21 @@
         </select>
         <span class="erro-campo" th:errors="*{pacienteId}"></span>
 
-        <label for="dataEmprestimo">Data do emprestimo</label>
+        <label for="dataEmprestimo">Data do empréstimo</label>
         <input id="dataEmprestimo" type="date" th:field="*{dataEmprestimo}" required>
         <span class="erro-campo" th:errors="*{dataEmprestimo}"></span>
 
-        <label for="dataPrevistaDevolucao">Previsao de devolucao</label>
+        <label for="dataPrevistaDevolucao">Previsão de devolução</label>
         <input id="dataPrevistaDevolucao" type="date" th:field="*{dataPrevistaDevolucao}" required>
         <span class="erro-campo" th:errors="*{dataPrevistaDevolucao}"></span>
 
-        <label for="observacao">Observacao</label>
+        <label for="observacao">Observação</label>
         <textarea id="observacao" th:field="*{observacao}" maxlength="255"></textarea>
         <span class="erro-campo" th:errors="*{observacao}"></span>
 
         <button class="botao botao-primario" type="submit"
                 th:disabled="${#lists.isEmpty(equipamentos) || #lists.isEmpty(pacientes)}">
-            Registrar emprestimo
+            Registrar empréstimo
         </button>
     </form>
 </main>

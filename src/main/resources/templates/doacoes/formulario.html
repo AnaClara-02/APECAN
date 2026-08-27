@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Nova doacao | APECAN</title>
+    <title>Nova doação | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script defer th:src="@{/js/doacao-form.js}"></script>
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main class="conteudo conteudo-estreito">
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
     <section class="cabecalho-pagina">
         <div>
-            <p class="rotulo">Doacoes</p>
-            <h1>Nova doacao</h1>
+            <p class="rotulo">Doações</p>
+            <h1>Nova doação</h1>
             <p class="texto-secundario">Selecione o tipo para visualizar somente os campos correspondentes.</p>
         </div>
         <a class="botao botao-secundario" th:href="@{/doacoes}">Voltar</a>
@@ -22,21 +22,21 @@
     <form class="cartao formulario" th:action="@{/doacoes}" th:object="${doacaoForm}" method="post"
           data-form-doacao>
         <div class="alerta alerta-erro" th:if="${#fields.hasAnyErrors()}" role="alert">
-            <strong>Nao foi possivel registrar a doacao.</strong>
+            <strong>Não foi possível registrar a doação.</strong>
             <ul>
                 <li th:each="erro : ${#fields.allErrors()}" th:text="${erro}"></li>
             </ul>
         </div>
 
-        <label for="tipo">Tipo da doacao</label>
+        <label for="tipo">Tipo da doação</label>
         <select id="tipo" th:field="*{tipo}" data-tipo-doacao required>
             <option value="">Selecione</option>
             <option th:each="tipo : ${tipos}" th:value="${tipo}"
-                    th:text="${tipo.name() == 'MONETARIA' ? 'Monetaria' : (tipo.name() == 'EQUIPAMENTO' ? 'Equipamento' : 'Outro bem')}"></option>
+                    th:text="${tipo.name() == 'MONETARIA' ? 'Monetária' : (tipo.name() == 'EQUIPAMENTO' ? 'Equipamento' : 'Outro bem')}"></option>
         </select>
         <span class="erro-campo" th:errors="*{tipo}"></span>
 
-        <label for="dataDoacao">Data da doacao</label>
+        <label for="dataDoacao">Data da doação</label>
         <input id="dataDoacao" type="date" th:field="*{dataDoacao}" required>
         <span class="erro-campo" th:errors="*{dataDoacao}"></span>
 
@@ -46,7 +46,7 @@
 
         <section class="grupo-doacao" data-grupo-doacao="MONETARIA"
                  th:hidden="${doacaoForm.tipo == null || doacaoForm.tipo.name() != 'MONETARIA'}">
-            <h2>Doacao monetaria</h2>
+            <h2>Doação monetária</h2>
             <label for="valor">Valor</label>
             <input id="valor" type="text" th:field="*{valor}" data-moeda-brl data-obrigatorio-tipo
                    inputmode="numeric" autocomplete="off" placeholder="R$ 0,00">
@@ -65,7 +65,7 @@
             </select>
             <span class="erro-campo" th:errors="*{categoriaId}"></span>
 
-            <label for="estadoConservacao">Estado de conservacao</label>
+            <label for="estadoConservacao">Estado de conservação</label>
             <select id="estadoConservacao" th:field="*{estadoConservacao}" data-obrigatorio-tipo>
                 <option value="">Selecione</option>
                 <option th:each="conservacao : ${conservacoes}" th:value="${conservacao}"
@@ -95,7 +95,7 @@
         </section>
 
         <section>
-            <h2>Participantes voluntarios <small>(opcional)</small></h2>
+            <h2>Participantes voluntários <small>(opcional)</small></h2>
 
             <label for="doadorId">Doador</label>
             <select id="doadorId" th:field="*{doadorId}">
@@ -104,7 +104,7 @@
                         th:text="${voluntario.nome}"></option>
             </select>
 
-            <label for="responsavelId">Responsavel</label>
+            <label for="responsavelId">Responsável</label>
             <select id="responsavelId" th:field="*{responsavelId}">
                 <option value="">Nenhum</option>
                 <option th:each="voluntario : ${voluntarios}" th:value="${voluntario.id}"
@@ -112,7 +112,7 @@
             </select>
         </section>
 
-        <button class="botao botao-primario" type="submit">Registrar doacao</button>
+        <button class="botao botao-primario" type="submit">Registrar doação</button>
     </form>
 </main>
 </body>

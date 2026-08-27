@@ -23,8 +23,11 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest
 @Transactional
@@ -67,9 +70,18 @@ class FluxoLoginTests {
 			.getRequest()
 			.getSession(false);
 
+		mockMvc.perform(get("/inicio").session(sessao))
+			.andExpect(status().isOk())
+			.andExpect(view().name("inicio"))
+			.andExpect(model().attributeExists("usuarioLogado", "caminhoAtual", "resumo"))
+			.andExpect(content().string(containsString("Pacientes ativos")))
+			.andExpect(content().string(containsString("Administrador Web")));
+
 		mockMvc.perform(get("/usuarios").session(sessao))
 			.andExpect(status().isOk())
-			.andExpect(view().name("usuarios/lista"));
+			.andExpect(view().name("usuarios/lista"))
+			.andExpect(content().string(containsString("Administração")))
+			.andExpect(content().string(containsString("Cadastrar funcionário")));
 
 		mockMvc.perform(get("/usuarios/" + resultado.usuario().id()).session(sessao))
 			.andExpect(status().isOk())

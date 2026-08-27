@@ -3,38 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Usuarios | APECAN</title>
+    <title>Usuários | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<header class="cabecalho">
-    <a class="marca marca-clara" th:href="@{/inicio}">
-        <span class="marca-sigla">APECAN</span>
-        <span>Sistema integrado</span>
-    </a>
-    <nav class="navegacao">
-        <a th:href="@{/inicio}">Inicio</a>
-        <form th:action="@{/logout}" method="post">
-            <button class="botao-link" type="submit">Sair</button>
-        </form>
-    </nav>
-</header>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
 
-<main class="conteudo">
+<main id="conteudo-principal" class="conteudo">
     <section class="cabecalho-pagina">
         <div>
-            <p class="rotulo">Administracao</p>
-            <h1>Usuarios</h1>
-            <p class="texto-secundario">Gerencie contas individuais e transferencias administrativas.</p>
+            <p class="rotulo">Administração</p>
+            <h1>Usuários</h1>
+            <p class="texto-secundario">Gerencie contas individuais e responsabilidades administrativas.</p>
         </div>
-        <a class="botao botao-primario" th:href="@{/usuarios/novo}">Cadastrar funcionario</a>
+        <a class="botao botao-primario" th:href="@{/usuarios/novo}">Cadastrar funcionário</a>
     </section>
 
     <div class="alerta alerta-aviso" th:if="${quantidadeAdministradores < 2}">
-        Ha menos de dois administradores ativos. Ative e promova um sucessor.
+        Há menos de dois administradores ativos. Ative e promova um sucessor.
     </div>
 
-    <section class="cartao tabela-responsiva">
+    <section class="cartao tabela-responsiva" tabindex="0" aria-label="Lista de usuários">
         <table>
             <thead>
             <tr>
@@ -42,21 +31,21 @@
                 <th>Login</th>
                 <th>Perfil</th>
                 <th>Status</th>
-                <th>Ativacao</th>
-                <th></th>
+                <th>Ativação</th>
+                <th><span class="sr-only">Ações</span></th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="usuario : ${usuarios}">
                 <td th:text="${usuario.nome}">Nome</td>
                 <td th:text="${usuario.login}">login</td>
-                <td th:text="${usuario.tipoPerfil}">USUARIO</td>
-                <td th:text="${usuario.status}">ATIVO</td>
-                <td th:text="${usuario.primeiroAcessoPendente ? 'Pendente' : 'Concluida'}">Pendente</td>
-                <td><a th:href="@{/usuarios/{id}(id=${usuario.id})}">Ver</a></td>
+                <td><span class="status" th:text="${usuario.tipoPerfil}">USUÁRIO</span></td>
+                <td><span class="status" th:classappend="${usuario.estaAtivo()} ? ' status-sucesso'" th:text="${usuario.status}">ATIVO</span></td>
+                <td th:text="${usuario.primeiroAcessoPendente ? 'Pendente' : 'Concluída'}">Pendente</td>
+                <td><a th:href="@{/usuarios/{id}(id=${usuario.id})}">Consultar</a></td>
             </tr>
             <tr th:if="${#lists.isEmpty(usuarios)}">
-                <td colspan="6">Nenhum usuario cadastrado.</td>
+                <td colspan="6">Nenhum usuário cadastrado.</td>
             </tr>
             </tbody>
         </table>

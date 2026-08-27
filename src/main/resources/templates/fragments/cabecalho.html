@@ -1,30 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <body>
-<header class="cabecalho" th:fragment="cabecalho">
-    <a class="marca marca-clara" th:href="@{/inicio}">
-        <span class="marca-sigla">APECAN</span>
-        <span>Sistema integrado</span>
-    </a>
-    <nav class="navegacao" aria-label="Navegacao principal">
-        <a th:href="@{/inicio}">Inicio</a>
-        <a th:href="@{/pacientes}">Pacientes</a>
-        <a th:href="@{/voluntarios}">Voluntarios</a>
-        <a th:href="@{/equipamentos}">Equipamentos</a>
-        <a th:href="@{/emprestimos}">Emprestimos</a>
-        <a th:href="@{/doacoes}">Doacoes</a>
-        <a th:href="@{/financeiro}">Financeiro</a>
-        <a th:href="@{/relatorios}">Relatorios</a>
-        <a th:href="@{/minha-conta/senha}">Minha senha</a>
-        <form th:action="@{/logout}" method="post">
-            <button class="botao-link" type="submit">Sair</button>
-        </form>
-    </nav>
-</header>
-
-<div th:fragment="mensagens" aria-live="polite">
-    <div class="alerta alerta-sucesso" th:if="${sucesso}" th:text="${sucesso}"></div>
-    <div class="alerta alerta-erro" th:if="${erro}" th:text="${erro}"></div>
+<th:block th:fragment="cabecalho">
+    <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+    <button class="fundo-navegacao" type="button" data-fechar-menu aria-label="Fechar menu" tabindex="-1"></button>
+    <aside class="barra-lateral" id="navegacao-principal" aria-label="Navegação principal">
+        <div class="marca-area">
+            <a class="marca" th:href="@{/inicio}" aria-label="APECAN — ir para o início">
+                <span class="marca-simbolo" aria-hidden="true">A</span>
+                <span><strong class="marca-sigla">APECAN</strong><small>Associação de apoio</small></span>
+            </a>
+            <button class="botao-icone fechar-menu" type="button" data-fechar-menu aria-label="Fechar menu"><span aria-hidden="true">×</span></button>
+        </div>
+        <nav class="menu-lateral">
+            <a class="item-menu" th:href="@{/inicio}" th:classappend="${caminhoAtual == '/' or caminhoAtual == '/inicio'} ? ' ativo'" th:attr="aria-current=${caminhoAtual == '/' or caminhoAtual == '/inicio'} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#inicio}"></use></svg><span>Início</span>
+            </a>
+            <p class="grupo-menu">Atendimento</p>
+            <a class="item-menu" th:href="@{/pacientes}" th:classappend="${#strings.startsWith(caminhoAtual, '/pacientes')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/pacientes')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#pacientes}"></use></svg><span>Pacientes</span>
+            </a>
+            <a class="item-menu" th:href="@{/voluntarios}" th:classappend="${#strings.startsWith(caminhoAtual, '/voluntarios')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/voluntarios')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#voluntarios}"></use></svg><span>Voluntários</span>
+            </a>
+            <p class="grupo-menu">Operações</p>
+            <a class="item-menu" th:href="@{/equipamentos}" th:classappend="${#strings.startsWith(caminhoAtual, '/equipamentos')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/equipamentos')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#equipamentos}"></use></svg><span>Equipamentos</span>
+            </a>
+            <a class="item-menu" th:href="@{/emprestimos}" th:classappend="${#strings.startsWith(caminhoAtual, '/emprestimos')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/emprestimos')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#emprestimos}"></use></svg><span>Empréstimos</span>
+            </a>
+            <a class="item-menu" th:href="@{/doacoes}" th:classappend="${#strings.startsWith(caminhoAtual, '/doacoes')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/doacoes')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#doacoes}"></use></svg><span>Doações</span>
+            </a>
+            <p class="grupo-menu">Gestão</p>
+            <a class="item-menu" th:href="@{/financeiro}" th:classappend="${#strings.startsWith(caminhoAtual, '/financeiro')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/financeiro')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#financeiro}"></use></svg><span>Financeiro</span>
+            </a>
+            <a class="item-menu" th:href="@{/relatorios}" th:classappend="${#strings.startsWith(caminhoAtual, '/relatorios')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/relatorios')} ? 'page' : null">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Relatórios</span>
+            </a>
+            <th:block th:if="${usuarioLogado != null and usuarioLogado.administrador()}">
+                <p class="grupo-menu">Administração</p>
+                <a class="item-menu" th:href="@{/usuarios}" th:classappend="${#strings.startsWith(caminhoAtual, '/usuarios')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/usuarios')} ? 'page' : null">
+                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#usuarios}"></use></svg><span>Usuários</span>
+                </a>
+            </th:block>
+        </nav>
+        <div class="rodape-menu">
+            <a class="item-menu" th:href="@{/minha-conta/senha}" th:classappend="${#strings.startsWith(caminhoAtual, '/minha-conta')} ? ' ativo'">
+                <svg aria-hidden="true"><use th:href="@{/images/icons.svg#conta}"></use></svg><span>Minha conta</span>
+            </a>
+            <form th:action="@{/logout}" method="post"><button class="item-menu item-menu-botao" type="submit"><svg aria-hidden="true"><use th:href="@{/images/icons.svg#sair}"></use></svg><span>Sair</span></button></form>
+        </div>
+    </aside>
+    <header class="cabecalho">
+        <button class="botao-icone abrir-menu" type="button" data-abrir-menu aria-controls="navegacao-principal" aria-expanded="false" aria-label="Abrir menu"><svg aria-hidden="true"><use th:href="@{/images/icons.svg#menu}"></use></svg></button>
+        <div class="cabecalho-contexto"><span class="cabecalho-sistema">Sistema integrado</span></div>
+        <div class="usuario-cabecalho" th:if="${usuarioLogado != null}">
+            <span class="usuario-avatar" th:text="${#strings.substring(usuarioLogado.nome(), 0, 1)}">A</span>
+            <span class="usuario-identificacao"><strong th:text="${usuarioLogado.nome()}">Usuário</strong><small th:text="${usuarioLogado.administrador() ? 'Administrador' : 'Usuário'}">Perfil</small></span>
+        </div>
+    </header>
+    <script defer th:src="@{/js/app.js}"></script>
+</th:block>
+<div th:fragment="mensagens" class="mensagens" aria-live="polite" aria-atomic="true">
+    <div class="alerta alerta-sucesso" role="status" th:if="${sucesso}" th:text="${sucesso}"></div>
+    <div class="alerta alerta-erro" role="alert" th:if="${erro}" th:text="${erro}"></div>
 </div>
+<a th:fragment="marca-publica" class="marca" th:href="@{/login}" aria-label="APECAN">
+    <span class="marca-simbolo" aria-hidden="true">A</span>
+    <span><strong class="marca-sigla">APECAN</strong><small>Associação de Apoio à Pessoa com Câncer</small></span>
+</a>
 </body>
 </html>

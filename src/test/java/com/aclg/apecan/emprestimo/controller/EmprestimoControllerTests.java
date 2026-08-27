@@ -105,7 +105,7 @@ class EmprestimoControllerTests {
 		mockMvc.perform(post("/emprestimos").with(authentication(autenticacao)).with(csrf()))
 			.andExpect(status().isOk())
 			.andExpect(view().name("emprestimos/novo"))
-			.andExpect(content().string(org.hamcrest.Matchers.containsString("Nao foi possivel registrar")));
+			.andExpect(content().string(org.hamcrest.Matchers.containsString("Não foi possível registrar")));
 
 		assertThat(emprestimos.count()).isZero();
 	}

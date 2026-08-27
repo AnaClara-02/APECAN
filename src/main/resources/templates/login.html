@@ -7,20 +7,18 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="pagina-centralizada">
-<main class="cartao autenticacao">
-    <div class="marca">
-        <span class="marca-sigla">APECAN</span>
-        <span>Associacao de Apoio a Pessoa com Cancer</span>
-    </div>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+<main id="conteudo-principal" class="cartao autenticacao">
+    <div th:replace="~{fragments/cabecalho :: marca-publica}"></div>
 
     <h1>Acesso ao sistema</h1>
-    <p class="texto-secundario">Entre com o login individual fornecido pela administracao.</p>
+    <p class="texto-secundario">Entre com o acesso individual fornecido pela administração.</p>
 
-    <div class="alerta alerta-erro" th:if="${param.erro}">
-        Usuario ou senha invalidos.
+    <div class="alerta alerta-erro" role="alert" th:if="${param.erro}">
+        Usuário ou senha inválidos.
     </div>
     <div class="alerta alerta-sucesso" th:if="${param.logout}">
-        Sessao encerrada com seguranca.
+        Sessão encerrada com segurança.
     </div>
     <div class="alerta alerta-sucesso" th:if="${param.ativada}">
         Conta ativada. Agora voce ja pode entrar.
@@ -37,9 +35,9 @@
         <label for="senha">Senha</label>
         <input id="senha" name="senha" type="password" autocomplete="current-password" required>
 
-        <button class="botao botao-primario" type="submit">Entrar</button>
+        <button class="botao botao-primario" type="submit">Entrar com segurança</button>
     </form>
-    <p><a th:href="@{/esqueci-senha}">Esqueci minha senha</a></p>
+    <p class="autenticacao-rodape"><a th:href="@{/esqueci-senha}">Esqueci minha senha</a></p>
 </main>
 </body>
 </html>

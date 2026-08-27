@@ -101,6 +101,9 @@ class SecurityConfigTests {
                 "Permissions-Policy",
                 "camera=(), microphone=(), geolocation=()"
             ));
+
+		mockMvc.perform(get("/fonts/nunito-sans-variable.ttf"))
+			.andExpect(status().isOk());
     }
 
     @Test

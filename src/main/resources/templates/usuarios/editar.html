@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editar usuario | APECAN</title>
+    <title>Editar usuário | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script defer th:src="@{/js/telefone-mask.js}"></script>
 </head>
 <body>
-<header class="cabecalho">
-    <a class="marca marca-clara" th:href="@{/inicio}"><span class="marca-sigla">APECAN</span></a>
-    <nav class="navegacao"><a th:href="@{/usuarios/{id}(id=${usuario.id})}">Voltar ao usuario</a></nav>
-</header>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
 
-<main class="conteudo conteudo-estreito">
-    <section class="cabecalho-pagina"><div><p class="rotulo">Administracao</p><h1>Editar usuario</h1></div></section>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <section class="cabecalho-pagina"><div><p class="rotulo">Administração</p><h1>Editar usuário</h1></div><a class="botao botao-secundario" th:href="@{/usuarios/{id}(id=${usuario.id})}">Voltar</a></section>
 
     <form class="cartao formulario"
           th:action="@{/usuarios/{id}/editar(id=${usuario.id})}"
@@ -39,7 +36,7 @@
         <span class="erro-campo" th:errors="*{telefone}"></span>
 
         <div class="acoes">
-            <button class="botao botao-primario" type="submit">Salvar alteracoes</button>
+            <button class="botao botao-primario" type="submit">Salvar alterações</button>
             <a class="botao botao-secundario" th:href="@{/usuarios/{id}(id=${usuario.id})}">Cancelar</a>
         </div>
     </form>

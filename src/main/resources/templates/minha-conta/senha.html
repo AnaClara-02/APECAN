@@ -8,8 +8,8 @@
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main class="conteudo cartao">
-    <h1>Alterar minha senha</h1>
+<main id="conteudo-principal" class="conteudo cartao">
+    <p class="rotulo">Minha conta</p><h1>Alterar minha senha</h1><p class="texto-secundario">Use uma senha longa e exclusiva para proteger seu acesso.</p>
     <div class="alerta alerta-erro" th:if="${erroSenha}" th:text="${erroSenha}"></div>
     <form class="formulario" th:action="@{/minha-conta/senha}" th:object="${alterarSenhaForm}" method="post">
         <label for="senhaAtual">Senha atual</label>

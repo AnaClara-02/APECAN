@@ -1,31 +1,16 @@
-:root {
-    color-scheme: light;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #1f2937;
-    background: #f3f4f6;
-}
-
-body {
-    display: grid;
-    min-height: 100vh;
-    margin: 0;
-    place-items: center;
-}
-
-main {
-    width: min(32rem, calc(100% - 3rem));
-    padding: 2rem;
-    border-radius: 0.75rem;
-    background: #ffffff;
-    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 10%);
-    text-align: center;
-}
-
-h1 {
-    margin-top: 0;
-    color: #9f1239;
-}
-
-a {
-    color: #1d4ed8;
-}
+@font-face { font-family: "Nunito Sans"; src: url("../fonts/nunito-sans-variable.ttf") format("truetype"); font-weight: 200 1000; font-style: normal; font-display: swap; }
+:root { color-scheme: light; font-family: "Nunito Sans", "Segoe UI", sans-serif; color: #302e3d; background: #f7f7fc; }
+* { box-sizing: border-box; }
+body { display: grid; min-height: 100vh; margin: 0; padding: 1.5rem; place-items: center; overflow: hidden; background: linear-gradient(145deg, #f2eff9, #f7f7fc 48%, #edf6fb); }
+body::before, body::after { position: fixed; z-index: -1; width: 300px; height: 300px; border-radius: 50%; content: ""; }
+body::before { top: -160px; left: -100px; background: rgb(210 200 236 / 45%); }
+body::after { right: -100px; bottom: -170px; background: rgb(196 225 240 / 52%); }
+main { width: min(34rem, 100%); padding: clamp(1.5rem, 5vw, 2.5rem); border: 1px solid #dedbe8; border-radius: 18px; background: #fff; box-shadow: 0 16px 42px rgb(72 64 112 / 10%); text-align: center; }
+main::before { display: grid; width: 48px; height: 48px; margin: 0 auto 1.25rem; place-items: center; border-radius: 15px 15px 15px 5px; background: #625b91; color: #fff; content: "A"; font-size: 1.35rem; font-weight: 800; }
+h1 { margin: 0 0 .75rem; font-size: clamp(1.65rem, 5vw, 2.2rem); line-height: 1.2; }
+p { color: #6d6a79; line-height: 1.6; }
+a { display: inline-flex; min-height: 44px; margin-top: .75rem; align-items: center; padding: .65rem 1rem; border-radius: 11px; background: #625b91; color: #fff; font-weight: 800; text-decoration: none; }
+a:hover { background: #4d4778; }
+a:focus-visible { outline: 3px solid rgb(66 116 147 / 35%); outline-offset: 3px; }
+.pular-conteudo { position: fixed; left: 1rem; top: -5rem; z-index: 10; margin: 0; background: #302e3d; }
+.pular-conteudo:focus { top: 1rem; }

@@ -7,7 +7,7 @@
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main class="conteudo">
+<main id="conteudo-principal" class="conteudo">
     <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
     <section class="cabecalho-pagina">
         <div><p class="rotulo">Paciente</p><h1 th:text="${paciente.nome}">Nome</h1></div>
@@ -20,7 +20,7 @@
                 <dt>CPF</dt><dd th:text="${paciente.cpf}">CPF</dd>
                 <dt>Nascimento</dt><dd th:text="${#temporals.format(paciente.dataNascimento, 'dd/MM/yyyy')}">Data</dd>
                 <dt>Telefone</dt><dd th:text="${paciente.telefone}">Telefone</dd>
-                <dt>Endereco</dt><dd th:text="${paciente.endereco}">Endereco</dd>
+                <dt>Endereço</dt><dd th:text="${paciente.endereco}">Endereço</dd>
                 <dt>Tratamento</dt><dd th:text="${paciente.localTratamento}">Local</dd>
                 <dt>Status</dt><dd th:text="${paciente.status}">ATIVO</dd>
                 <dt>Cadastrado por</dt><dd th:text="${paciente.criadoPor}">Usuario</dd>

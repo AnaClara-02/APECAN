@@ -16,18 +16,20 @@ public final class UsuarioPrincipal implements UserDetails {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final Long id;
-    private final String login;
+	private final Long id;
+	private final String nome;
+	private final String login;
     private final String senhaHash;
     private final TipoPerfil tipoPerfil;
     private final boolean ativo;
     private final boolean ativado;
 
-    private UsuarioPrincipal(Long id, String login, String senhaHash,
-                             TipoPerfil tipoPerfil, boolean ativo,
-                             boolean ativado) {
-        this.id = id;
-        this.login = login;
+	private UsuarioPrincipal(Long id, String nome, String login, String senhaHash,
+							 TipoPerfil tipoPerfil, boolean ativo,
+							 boolean ativado) {
+		this.id = id;
+		this.nome = nome;
+		this.login = login;
         this.senhaHash = senhaHash;
         this.tipoPerfil = tipoPerfil;
         this.ativo = ativo;
@@ -35,9 +37,10 @@ public final class UsuarioPrincipal implements UserDetails {
     }
 
     public static UsuarioPrincipal de(Usuario usuario) {
-        return new UsuarioPrincipal(
-            usuario.getId(),
-            usuario.getLogin(),
+		return new UsuarioPrincipal(
+			usuario.getId(),
+			usuario.getNome(),
+			usuario.getLogin(),
             usuario.getSenhaHash(),
             usuario.getTipoPerfil(),
             usuario.getStatus() == StatusUsuario.ATIVO,
@@ -45,9 +48,13 @@ public final class UsuarioPrincipal implements UserDetails {
         );
     }
 
-    public Long getId() {
-        return id;
-    }
+	public Long getId() {
+		return id;
+	}
+
+	public String getNome() {
+		return nome;
+	}
 
     public TipoPerfil getTipoPerfil() {
         return tipoPerfil;
