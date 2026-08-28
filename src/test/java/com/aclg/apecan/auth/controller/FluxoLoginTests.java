@@ -1,6 +1,7 @@
 package com.aclg.apecan.auth.controller;
 
 import com.aclg.apecan.auth.service.AtivacaoUsuarioService;
+import com.aclg.apecan.paciente.repository.PacienteRepository;
 import com.aclg.apecan.usuario.dto.NovoUsuarioForm;
 import com.aclg.apecan.usuario.dto.UsuarioCriadoResultado;
 import com.aclg.apecan.usuario.service.UsuarioService;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -45,6 +47,9 @@ class FluxoLoginTests {
 
 	@Autowired
 	private AtivacaoUsuarioService ativacaoService;
+
+	@Autowired
+	private PacienteRepository pacienteRepository;
 
 	@BeforeEach
 	void prepararMockMvc() {
@@ -69,6 +74,62 @@ class FluxoLoginTests {
 			.andReturn()
 			.getRequest()
 			.getSession(false);
+
+		mockMvc.perform(post("/pacientes").session(sessao).with(csrf())
+				.param("nome", "Paciente 123")
+				.param("cpf", "11144477735")
+				.param("dataNascimento", "2000-01-01")
+				.param("telefone", "14988888888")
+				.param("endereco", "Rua das Flores, 10")
+				.param("localTratamento", "Hospital 9 de Julho"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("pacientes/novo"))
+			.andExpect(model().attributeHasFieldErrors("novoPacienteForm", "nome"))
+			.andExpect(content().string(containsString("Use somente letras, espaços, apóstrofos e hífens.")));
+
+		mockMvc.perform(post("/pacientes").session(sessao).with(csrf())
+				.param("nome", "Paciente Válido")
+				.param("cpf", "11144477735")
+				.param("dataNascimento", "275760-02-25")
+				.param("telefone", "14988888888")
+				.param("endereco", "Rua das Flores, 10")
+				.param("localTratamento", "Hospital 9 de Julho"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("pacientes/novo"))
+			.andExpect(model().attributeHasFieldErrors("novoPacienteForm", "dataNascimento"))
+			.andExpect(content().string(containsString("Informe uma data de nascimento válida.")));
+
+		mockMvc.perform(post("/pacientes").session(sessao).with(csrf())
+				.param("nome", "Paciente Válido")
+				.param("cpf", "11144477735")
+				.param("dataNascimento", "2000-01-01")
+				.param("telefone", "14988888888")
+				.param("endereco", " A    ")
+				.param("localTratamento", " X "))
+			.andExpect(status().isOk())
+			.andExpect(view().name("pacientes/novo"))
+			.andExpect(model().attributeHasFieldErrors("novoPacienteForm", "endereco", "localTratamento"))
+			.andExpect(content().string(containsString("Informe um endereço com pelo menos 5 caracteres.")))
+			.andExpect(content().string(containsString("Informe o nome da unidade ou cidade de tratamento.")));
+
+		String enderecoCompleto = "Rua das Flores, 125, Centro, Ribeirão do Sul - SP";
+		String localTratamentoCompleto = "Hospital Regional de Assis";
+		mockMvc.perform(post("/pacientes").session(sessao).with(csrf())
+				.param("nome", "Paciente Válido")
+				.param("cpf", "11144477735")
+				.param("dataNascimento", "2000-01-01")
+				.param("telefone", "14988888888")
+				.param("endereco", enderecoCompleto)
+				.param("localTratamento", localTratamentoCompleto))
+			.andExpect(status().isFound());
+
+		var pacienteCadastrado = pacienteRepository.findAll()
+			.stream()
+			.filter(paciente -> "11144477735".equals(paciente.getCpf()))
+			.findFirst()
+			.orElseThrow();
+		assertThat(pacienteCadastrado.getEndereco()).isEqualTo(enderecoCompleto);
+		assertThat(pacienteCadastrado.getLocalTratamento()).isEqualTo(localTratamentoCompleto);
 
 		mockMvc.perform(get("/inicio").session(sessao))
 			.andExpect(status().isOk())

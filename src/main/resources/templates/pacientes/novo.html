@@ -13,12 +13,12 @@
     <section class="cabecalho-pagina"><div><p class="rotulo">Pacientes</p><h1>Novo paciente</h1></div><a class="botao botao-secundario" th:href="@{/pacientes}">Voltar</a></section>
     <form class="cartao formulario" th:action="@{/pacientes}" th:object="${novoPacienteForm}" method="post">
         <div class="alerta alerta-erro" th:if="${#fields.hasGlobalErrors()}" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
-        <label for="nome">Nome</label><input id="nome" th:field="*{nome}" maxlength="150" required><span class="erro-campo" th:errors="*{nome}"></span>
+        <label for="nome">Nome</label><input id="nome" th:field="*{nome}" maxlength="150" autocomplete="name" data-somente-letras title="Use somente letras, espaços, apóstrofos e hífens." required><span class="erro-campo" th:errors="*{nome}"></span>
         <label for="cpf">CPF</label><input id="cpf" th:field="*{cpf}" data-cpf inputmode="numeric" required><span class="erro-campo" th:errors="*{cpf}"></span>
-        <label for="dataNascimento">Data de nascimento</label><input id="dataNascimento" type="date" th:field="*{dataNascimento}" required><span class="erro-campo" th:errors="*{dataNascimento}"></span>
+        <label for="dataNascimento">Data de nascimento</label><input id="dataNascimento" type="date" th:field="*{dataNascimento}" th:max="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" required><span class="erro-campo" th:errors="*{dataNascimento}"></span>
         <label for="telefone">Telefone</label><input id="telefone" type="tel" th:field="*{telefone}" data-telefone autocomplete="tel" required><span class="erro-campo" th:errors="*{telefone}"></span>
-        <label for="endereco">Endereço</label><input id="endereco" th:field="*{endereco}" maxlength="255" autocomplete="street-address" required><span class="erro-campo" th:errors="*{endereco}"></span>
-        <label for="localTratamento">Local de tratamento</label><input id="localTratamento" th:field="*{localTratamento}" maxlength="150" required><span class="erro-campo" th:errors="*{localTratamento}"></span>
+        <label for="endereco">Endereço</label><input id="endereco" th:field="*{endereco}" minlength="5" maxlength="255" autocomplete="street-address" placeholder="Rua, número, bairro e cidade" required><span class="ajuda">Informe rua, número, bairro e cidade sempre que possível.</span><span class="erro-campo" th:errors="*{endereco}"></span>
+        <label for="localTratamento">Local de tratamento</label><input id="localTratamento" th:field="*{localTratamento}" minlength="3" maxlength="150" placeholder="Hospital, clínica ou cidade" required><span class="ajuda">Informe o nome da unidade ou a cidade onde ocorre o tratamento.</span><span class="erro-campo" th:errors="*{localTratamento}"></span>
         <div class="acoes"><button class="botao botao-primario" type="submit">Cadastrar paciente</button><a class="botao" th:href="@{/pacientes}">Cancelar</a></div>
     </form>
 </main>

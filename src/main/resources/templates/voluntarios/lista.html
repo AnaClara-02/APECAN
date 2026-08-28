@@ -7,7 +7,7 @@
     <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
     <section class="cabecalho-pagina"><div><p class="rotulo">Atendimento</p><h1>Voluntários</h1><p class="texto-secundario">Consulte e mantenha os cadastros de quem apoia a associação.</p></div><a class="botao botao-primario" th:href="@{/voluntarios/novo}">Novo voluntário</a></section>
     <form class="filtros" method="get" th:action="@{/voluntarios}">
-        <div><label for="nome">Nome</label><input id="nome" name="nome" th:value="${nome}" placeholder="Buscar por nome"></div>
+        <div><label for="nome">Nome</label><input id="nome" name="nome" th:value="${nome}" placeholder="Buscar por nome" data-somente-letras title="Use somente letras, espaços, apóstrofos e hífens."></div>
         <div><label for="status">Status</label><select id="status" name="status"><option value="">Todos</option><option th:each="s : ${statusDisponiveis}" th:value="${s}" th:text="${s}" th:selected="${s == statusSelecionado}"></option></select></div>
         <button class="botao botao-secundario" type="submit">Aplicar filtros</button>
     </form>

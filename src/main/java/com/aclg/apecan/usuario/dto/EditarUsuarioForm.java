@@ -1,5 +1,6 @@
 package com.aclg.apecan.usuario.dto;
 
+import com.aclg.apecan.shared.validation.NomeValido;
 import com.aclg.apecan.shared.validation.TelefoneBrasileiro;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
 public class EditarUsuarioForm {
 
     @NotBlank(message = "Informe o nome.")
+    @NomeValido
     @Size(max = 150, message = "O nome deve possuir no maximo 150 caracteres.")
     private String nome;
 

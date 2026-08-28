@@ -1,6 +1,7 @@
 package com.aclg.apecan.paciente.dto;
 
 import com.aclg.apecan.shared.validation.CpfValido;
+import com.aclg.apecan.shared.validation.NomeValido;
 import com.aclg.apecan.shared.validation.TelefoneBrasileiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 public class NovoPacienteForm {
 
 	@NotBlank(message = "Informe o nome.")
+	@NomeValido
 	@Size(max = 150, message = "O nome deve possuir no maximo 150 caracteres.")
 	private String nome;
 
@@ -28,11 +30,11 @@ public class NovoPacienteForm {
 	private String telefone;
 
 	@NotBlank(message = "Informe o endereco.")
-	@Size(max = 255, message = "O endereco deve possuir no maximo 255 caracteres.")
+	@Size(min = 5, max = 255, message = "Informe um endereço com pelo menos 5 caracteres.")
 	private String endereco;
 
 	@NotBlank(message = "Informe o local de tratamento.")
-	@Size(max = 150, message = "O local deve possuir no maximo 150 caracteres.")
+	@Size(min = 3, max = 150, message = "Informe o nome da unidade ou cidade de tratamento.")
 	private String localTratamento;
 
 	public String getNome() {
@@ -72,7 +74,7 @@ public class NovoPacienteForm {
 	}
 
 	public void setEndereco(String endereco) {
-		this.endereco = endereco;
+		this.endereco = limparExtremidades(endereco);
 	}
 
 	public String getLocalTratamento() {
@@ -80,7 +82,11 @@ public class NovoPacienteForm {
 	}
 
 	public void setLocalTratamento(String localTratamento) {
-		this.localTratamento = localTratamento;
+		this.localTratamento = limparExtremidades(localTratamento);
+	}
+
+	private String limparExtremidades(String valor) {
+		return valor == null ? null : valor.strip();
 	}
 
 }

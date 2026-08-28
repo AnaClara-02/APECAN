@@ -1,6 +1,7 @@
 package com.aclg.apecan.voluntario.dto;
 
 import com.aclg.apecan.shared.validation.CpfValido;
+import com.aclg.apecan.shared.validation.NomeValido;
 import com.aclg.apecan.shared.validation.TelefoneBrasileiro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 public class VoluntarioForm {
 
 	@NotBlank
+	@NomeValido
 	@Size(max = 150)
 	private String nome;
 
@@ -27,7 +29,7 @@ public class VoluntarioForm {
 	private String telefone;
 
 	@NotBlank
-	@Size(max = 255)
+	@Size(min = 5, max = 255, message = "Informe um endereço com pelo menos 5 caracteres.")
 	private String endereco;
 
 	public String getNome() {
@@ -67,7 +69,7 @@ public class VoluntarioForm {
 	}
 
 	public void setEndereco(String v) {
-		endereco = v;
+		endereco = v == null ? null : v.strip();
 	}
 
 }

@@ -20,7 +20,8 @@
              th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
 
         <label for="nome">Nome completo</label>
-        <input id="nome" type="text" th:field="*{nome}" maxlength="150" required>
+        <input id="nome" type="text" th:field="*{nome}" maxlength="150" autocomplete="name"
+               data-somente-letras title="Use somente letras, espaços, apóstrofos e hífens." required>
         <span class="erro-campo" th:errors="*{nome}"></span>
 
         <label for="login">Login</label>

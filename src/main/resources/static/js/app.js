@@ -1,4 +1,19 @@
 (() => {
+    document.querySelectorAll('[data-somente-letras]').forEach((campo) => {
+        campo.addEventListener('input', () => {
+            const valorOriginal = campo.value;
+            const posicaoOriginal = campo.selectionStart ?? valorOriginal.length;
+            const trechoAntesDoCursor = valorOriginal.slice(0, posicaoOriginal);
+            const valorLimpo = valorOriginal.replace(/[^\p{L}\p{M} '’-]/gu, '');
+
+            if (valorLimpo === valorOriginal) return;
+
+            const trechoLimpo = trechoAntesDoCursor.replace(/[^\p{L}\p{M} '’-]/gu, '');
+            campo.value = valorLimpo;
+            campo.setSelectionRange(trechoLimpo.length, trechoLimpo.length);
+        });
+    });
+
     const body = document.body;
     const openButton = document.querySelector('[data-abrir-menu]');
     const closeButtons = document.querySelectorAll('[data-fechar-menu]');
