@@ -37,8 +37,13 @@ class PostgreSqlFlywayIntegrationTests {
 				   AND table_name = 'vw_resumo_equipamentos_por_categoria'
 				""", Integer.class);
 
-		assertThat(migracoes).isEqualTo(7);
+		assertThat(migracoes).isEqualTo(8);
 		assertThat(views).isEqualTo(1);
+		Integer tabelaAuditoria = jdbcTemplate.queryForObject("""
+				SELECT COUNT(*) FROM information_schema.tables
+				 WHERE table_schema = 'public' AND table_name = 'historico_exportacoes'
+				""", Integer.class);
+		assertThat(tabelaAuditoria).isEqualTo(1);
 
 		Long usuarioId = jdbcTemplate.queryForObject("""
 				INSERT INTO usuarios (

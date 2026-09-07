@@ -54,9 +54,23 @@ public class DoacaoService {
 
 	@Transactional(readOnly = true)
 	public Page<DoacaoDto> listar(TipoDoacao tipo, LocalDate inicio, LocalDate fim, int pagina) {
-		return doacoes
-			.pesquisar(tipo, inicio, fim, PageRequest.of(Math.max(0, pagina), 20, Sort.by("dataDoacao").descending()))
-			.map(this::dto);
+		validarPeriodo(inicio, fim);
+		Page<Doacao> resultado = doacoes.pesquisar(tipo, inicio, fim,
+			PageRequest.of(Math.max(0, pagina), 20, Sort.by("dataDoacao").descending()));
+		List<Long> ids = resultado.getContent().stream().map(Doacao::getId).toList();
+		Map<Long, MovimentacaoFinanceira> movimentosPorDoacao = ids.isEmpty() ? Map.of()
+			: movimentos.findAllByDoacaoIdIn(ids).stream()
+				.collect(java.util.stream.Collectors.toMap(m -> m.getDoacao().getId(), m -> m));
+		Map<Long, Long> equipamentosPorDoacao = ids.isEmpty() ? Map.of()
+			: equipamentos.contarPorDoacoes(ids).stream().collect(java.util.stream.Collectors.toMap(
+				q -> q.getDoacaoId(), q -> q.getQuantidade()));
+		return resultado.map(d -> dto(d, movimentosPorDoacao.get(d.getId()),
+			equipamentosPorDoacao.getOrDefault(d.getId(), 0L)));
+	}
+
+	private void validarPeriodo(LocalDate inicio, LocalDate fim) {
+		if (inicio != null && fim != null && inicio.isAfter(fim))
+			throw new OperacaoInvalidaException("PERIODO_INVALIDO", "A data inicial nao pode ser posterior a data final.");
 	}
 
 	@Transactional(readOnly = true)
@@ -84,7 +98,7 @@ public class DoacaoService {
 			movimentos.save(new MovimentacaoFinanceira(TipoMovimentacao.ENTRADA, f.getValor(), f.getDataDoacao(),
 					"APECAN", OrigemMovimentacao.DOACAO, "Doacao monetaria", d, u));
 		if (f.getTipo() == TipoDoacao.EQUIPAMENTO) {
-			CategoriaEquipamento c = categorias.findById(f.getCategoriaId())
+			CategoriaEquipamento c = categorias.findByIdForUpdate(f.getCategoriaId())
 				.orElseThrow(() -> new RecursoNaoEncontradoException("CATEGORIA_NAO_ENCONTRADA",
 						"Categoria nao encontrada."));
 			for (int i = 0; i < f.getQuantidadeEquipamentos(); i++)
@@ -126,10 +140,9 @@ public class DoacaoService {
 		return s.trim();
 	}
 
-	private DoacaoDto dto(Doacao d) {
-		var m = movimentos.findByDoacaoId(d.getId()).orElse(null);
+	private DoacaoDto dto(Doacao d, MovimentacaoFinanceira m, long quantidadeEquipamentos) {
 		return new DoacaoDto(d.getId(), d.getTipo(), d.getDataDoacao(), d.getFonteDoacao(), d.getQuantidade(),
-				d.getUnidade(), (int) equipamentos.countByDoacaoId(d.getId()), m == null ? null : m.getValor());
+				d.getUnidade(), Math.toIntExact(quantidadeEquipamentos), m == null ? null : m.getValor());
 	}
 
 }

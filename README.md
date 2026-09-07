@@ -11,7 +11,10 @@ com Spring Boot, Thymeleaf, Spring Security, PostgreSQL e Flyway.
 - voluntarios;
 - categorias, estoque individual de equipamentos, emprestimos e devolucoes;
 - doacoes monetarias, de equipamentos e de outros bens;
-- movimentacoes financeiras, despesas e relatorios.
+- movimentacoes financeiras, despesas e relatorios;
+- filtros de status iniciados em itens ativos e historico de cada equipamento;
+- exportacao detalhada de relatorios em PDF e XLSX, com auditoria;
+- tema claro ou noturno persistido no navegador.
 
 ## Configuracao local
 
@@ -73,6 +76,11 @@ O esquema é criado e evoluído somente pelas migrações de
 `src/main/resources/db/migration`. Migrações aplicadas nunca devem ser
 editadas; uma mudança exige um novo arquivo `Vn__descricao.sql`.
 
+A migração atual é a V8, que cria a auditoria das exportações de relatórios.
+As exportações não armazenam os arquivos no servidor: eles são gerados sob
+demanda, enviados com `Cache-Control: no-store` e registrados apenas por tipo,
+formato, filtros não pessoais, quantidade, responsável e data.
+
 O Java de compilação e implantação é o Java 25 LTS.
 
 ## Regras de seguranca do acesso
@@ -85,3 +93,12 @@ O Java de compilação e implantação é o Java 25 LTS.
 - cada administrador possui conta individual;
 - o último administrador ativo não pode ser desativado ou rebaixado;
 - alterações de perfil e status ficam registradas no histórico administrativo.
+
+## Cuidados antes da produção
+
+Dados reais exigem infraestrutura de produção com HTTPS, banco privado,
+backups e restauração testada, segredos gerenciados pela hospedagem e controle
+de acesso operacional. Planos gratuitos devem ser usados somente com dados
+fictícios ou anonimizados. Antes de executar mais de uma instância do backend,
+as sessões HTTP e o controle de tentativas de login precisam ser persistidos em
+armazenamento compartilhado.

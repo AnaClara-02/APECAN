@@ -1,5 +1,10 @@
 @font-face { font-family: "Nunito Sans"; src: url("../fonts/nunito-sans-variable.ttf") format("truetype"); font-weight: 200 1000; font-style: normal; font-display: swap; }
 :root { color-scheme: light; font-family: "Nunito Sans", "Segoe UI", sans-serif; color: #302e3d; background: #f7f7fc; }
+:root[data-theme="dark"] { color-scheme: dark; color: #f1eef7; background: #17161d; }
+:root[data-theme="dark"] body { background: linear-gradient(145deg, #17161d, #211e2a 48%, #19262d); }
+:root[data-theme="dark"] main { border-color: #46414f; background: #23212b; }
+:root[data-theme="dark"] h1 { color: #f1eef7; }
+:root[data-theme="dark"] p { color: #bbb5c7; }
 * { box-sizing: border-box; }
 body { display: grid; min-height: 100vh; margin: 0; padding: 1.5rem; place-items: center; overflow: hidden; background: linear-gradient(145deg, #f2eff9, #f7f7fc 48%, #edf6fb); }
 body::before, body::after { position: fixed; z-index: -1; width: 300px; height: 300px; border-radius: 50%; content: ""; }
@@ -14,3 +19,6 @@ a:hover { background: #4d4778; }
 a:focus-visible { outline: 3px solid rgb(66 116 147 / 35%); outline-offset: 3px; }
 .pular-conteudo { position: fixed; left: 1rem; top: -5rem; z-index: 10; margin: 0; background: #302e3d; }
 .pular-conteudo:focus { top: 1rem; }
+.botao-icone { display: inline-grid; width: 44px; height: 44px; place-items: center; border: 1px solid #625b91; border-radius: 12px; background: #fff; color: #302e3d; cursor: pointer; }
+.alternar-tema-global { position: fixed; z-index: 100; right: 1rem; bottom: 1rem; font-size: 1.25rem; }
+:root[data-theme="dark"] .botao-icone { border-color: #70658d; background: #23212b; color: #f1eef7; }

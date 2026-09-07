@@ -12,21 +12,30 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
+import java.time.Clock;
 
 @Controller
 @RequestMapping("/doacoes")
 public class DoacaoController {
 
 	private final DoacaoService service;
+	private final Clock clock;
 
-	public DoacaoController(DoacaoService s) {
+	public DoacaoController(DoacaoService s, Clock clock) {
 		service = s;
+		this.clock = clock;
 	}
 
 	@GetMapping
 	String listar(@RequestParam(required = false) TipoDoacao tipo, @RequestParam(required = false) LocalDate inicio,
 			@RequestParam(required = false) LocalDate fim, @RequestParam(defaultValue = "0") int pagina, Model m) {
-		m.addAttribute("pagina", service.listar(tipo, inicio, fim, pagina));
+		try {
+			m.addAttribute("pagina", service.listar(tipo, inicio, fim, pagina));
+		}
+		catch (RegraNegocioException exception) {
+			m.addAttribute("erro", exception.getMessage());
+			m.addAttribute("pagina", service.listar(tipo, null, null, 0));
+		}
 		m.addAttribute("tipos", TipoDoacao.values());
 		m.addAttribute("tipoSelecionado", tipo);
 		m.addAttribute("inicio", inicio);
@@ -37,7 +46,7 @@ public class DoacaoController {
 	@GetMapping("/nova")
 	String nova(Model m) {
 		DoacaoForm f = new DoacaoForm();
-		f.setDataDoacao(LocalDate.now());
+		f.setDataDoacao(LocalDate.now(clock));
 		preparar(f, m);
 		return "doacoes/formulario";
 	}

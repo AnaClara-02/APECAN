@@ -17,11 +17,12 @@
     </section>
 
     <form class="cartao filtros" method="get" th:action="@{/pacientes}">
+        <input type="hidden" name="todos" value="true">
         <div><label for="nome">Nome</label><input id="nome" name="nome" th:value="${nome}" maxlength="150" data-somente-letras title="Use somente letras, espaços, apóstrofos e hífens."></div>
         <div><label for="cpf">CPF</label><input id="cpf" name="cpf" th:value="${cpf}" data-cpf inputmode="numeric"></div>
         <div><label for="status">Status</label>
             <select id="status" name="status">
-                <option value="">Todos</option>
+                <option value="" th:selected="${todosStatus}">Todos</option>
                 <option th:each="item : ${statusDisponiveis}" th:value="${item}"
                         th:text="${item}" th:selected="${item == statusSelecionado}"></option>
             </select>
@@ -47,10 +48,10 @@
 
     <nav class="paginacao" aria-label="Paginação" th:if="${pagina.totalPages > 1}">
         <a class="botao botao-secundario" th:if="${pagina.hasPrevious()}"
-           th:href="@{/pacientes(pagina=${pagina.number - 1},nome=${nome},cpf=${cpf},status=${statusSelecionado})}">Anterior</a>
+           th:href="@{/pacientes(pagina=${pagina.number - 1},nome=${nome},cpf=${cpf},status=${statusSelecionado},todos=${todosStatus})}">Anterior</a>
         <span th:text="|Página ${pagina.number + 1} de ${pagina.totalPages}|">Página</span>
         <a class="botao botao-secundario" th:if="${pagina.hasNext()}"
-           th:href="@{/pacientes(pagina=${pagina.number + 1},nome=${nome},cpf=${cpf},status=${statusSelecionado})}">Próxima</a>
+           th:href="@{/pacientes(pagina=${pagina.number + 1},nome=${nome},cpf=${cpf},status=${statusSelecionado},todos=${todosStatus})}">Próxima</a>
     </nav>
 </main>
 </body>

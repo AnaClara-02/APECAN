@@ -1,6 +1,7 @@
 package com.aclg.apecan.auth.service;
 
 import com.aclg.apecan.usuario.entity.Usuario;
+import com.aclg.apecan.shared.transaction.AposCommitExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
@@ -17,12 +18,14 @@ public class EntregaRedefinicaoSenhaEmail implements EntregaRedefinicaoSenha {
 	private final String urlPublica;
 
 	private final String remetente;
+	private final AposCommitExecutor aposCommit;
 
 	public EntregaRedefinicaoSenhaEmail(JavaMailSender mailSender, @Value("${apecan.url-publica}") String urlPublica,
-			@Value("${APECAN_MAIL_FROM:${spring.mail.username}}") String remetente) {
+			@Value("${APECAN_MAIL_FROM:${spring.mail.username}}") String remetente, AposCommitExecutor aposCommit) {
 		this.mailSender = mailSender;
 		this.urlPublica = urlPublica.replaceAll("/+$", "");
 		this.remetente = remetente;
+		this.aposCommit = aposCommit;
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class EntregaRedefinicaoSenhaEmail implements EntregaRedefinicaoSenha {
 		mensagem.setSubject("Redefinicao de senha APECAN");
 		mensagem.setText("Ola, " + usuario.getNome() + ".\n\nRedefina sua senha pelo link:\n" + link
 				+ "\n\nSe voce nao solicitou, ignore esta mensagem.");
-		mailSender.send(mensagem);
+		aposCommit.executar(() -> mailSender.send(mensagem), "envio de redefinicao de senha");
 		return new RedefinicaoEmitida(null);
 	}
 

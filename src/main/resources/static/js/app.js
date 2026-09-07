@@ -1,4 +1,10 @@
 (() => {
+    document.querySelectorAll('form[data-confirmar]').forEach((formulario) => {
+        formulario.addEventListener('submit', (evento) => {
+            if (!window.confirm(formulario.dataset.confirmar)) evento.preventDefault();
+        });
+    });
+
     document.querySelectorAll('[data-somente-letras]').forEach((campo) => {
         campo.addEventListener('input', () => {
             const valorOriginal = campo.value;

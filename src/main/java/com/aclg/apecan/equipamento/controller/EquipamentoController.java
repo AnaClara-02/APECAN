@@ -3,6 +3,7 @@ package com.aclg.apecan.equipamento.controller;
 import com.aclg.apecan.equipamento.dto.*;
 import com.aclg.apecan.equipamento.entity.*;
 import com.aclg.apecan.equipamento.service.EquipamentoService;
+import com.aclg.apecan.emprestimo.service.EmprestimoService;
 import com.aclg.apecan.shared.exception.RegraNegocioException;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -16,21 +17,27 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class EquipamentoController {
 
 	private final EquipamentoService service;
+	private final EmprestimoService emprestimoService;
 
-	public EquipamentoController(EquipamentoService s) {
+	public EquipamentoController(EquipamentoService s, EmprestimoService emprestimoService) {
 		service = s;
+		this.emprestimoService = emprestimoService;
 	}
 
 	@GetMapping
 	String listar(@RequestParam(required = false) Long categoriaId,
 			@RequestParam(required = false) StatusEquipamento status, @RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "false") boolean todos,
 			Model m) {
+		if (status == null && !todos)
+			status = StatusEquipamento.ATIVO;
 		m.addAttribute("pagina", service.listar(categoriaId, status, pagina));
 		m.addAttribute("categorias", service.categorias());
 		m.addAttribute("resumo", service.resumo());
 		m.addAttribute("estados", StatusEquipamento.values());
 		m.addAttribute("categoriaSelecionada", categoriaId);
 		m.addAttribute("statusSelecionado", status);
+		m.addAttribute("todosStatus", todos);
 		return "equipamentos/lista";
 	}
 
@@ -53,8 +60,9 @@ public class EquipamentoController {
 	}
 
 	@GetMapping("/{id}")
-	String detalhe(@PathVariable Long id, Model m) {
+	String detalhe(@PathVariable Long id, @RequestParam(defaultValue = "0") int paginaHistorico, Model m) {
 		m.addAttribute("equipamento", service.buscar(id));
+		m.addAttribute("historico", emprestimoService.historicoEquipamento(id, paginaHistorico));
 		return "equipamentos/detalhe";
 	}
 
@@ -103,6 +111,18 @@ public class EquipamentoController {
 			catch (RegraNegocioException e) {
 				r.addFlashAttribute("erro", e.getMessage());
 			}
+		return "redirect:/equipamentos";
+	}
+
+	@PostMapping("/categorias/{id}/excluir")
+	String excluirCategoria(@PathVariable Long id, RedirectAttributes r) {
+		try {
+			service.excluirCategoria(id);
+			r.addFlashAttribute("sucesso", "Categoria excluida.");
+		}
+		catch (RegraNegocioException e) {
+			r.addFlashAttribute("erro", e.getMessage());
+		}
 		return "redirect:/equipamentos";
 	}
 

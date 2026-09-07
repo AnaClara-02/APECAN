@@ -12,6 +12,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 public class EquipamentoService {
@@ -61,9 +62,24 @@ public class EquipamentoService {
 
 	@Transactional
 	public Long cadastrar(@Valid EquipamentoForm f) {
-		Equipamento e = new Equipamento(categoria(f.getCategoriaId()), null, f.getEstadoConservacao(), responsavel());
+		Equipamento e = new Equipamento(categoriaParaAtualizar(f.getCategoriaId()), null, f.getEstadoConservacao(), responsavel());
 		equipamentos.saveAndFlush(e);
 		return e.getId();
+	}
+
+	@Transactional
+	public void excluirCategoria(Long id) {
+		CategoriaEquipamento categoria = categoriaParaAtualizar(id);
+		if (equipamentos.countByCategoriaId(id) != 0) {
+			throw new OperacaoInvalidaException("CATEGORIA_EM_USO", "A categoria possui equipamentos e nao pode ser excluida.");
+		}
+		try {
+			categorias.delete(categoria);
+			categorias.flush();
+		}
+		catch (DataIntegrityViolationException exception) {
+			throw new OperacaoInvalidaException("CATEGORIA_EM_USO", "A categoria possui equipamentos e nao pode ser excluida.");
+		}
 	}
 
 	@Transactional(readOnly = true)
@@ -105,6 +121,11 @@ public class EquipamentoService {
 		return categorias.findById(id)
 			.orElseThrow(
 					() -> new RecursoNaoEncontradoException("CATEGORIA_NAO_ENCONTRADA", "Categoria nao encontrada."));
+	}
+
+	private CategoriaEquipamento categoriaParaAtualizar(Long id) {
+		return categorias.findByIdForUpdate(id)
+			.orElseThrow(() -> new RecursoNaoEncontradoException("CATEGORIA_NAO_ENCONTRADA", "Categoria nao encontrada."));
 	}
 
 	private Equipamento entidade(Long id) {

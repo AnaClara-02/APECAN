@@ -32,11 +32,16 @@ public class PacienteController {
 	@GetMapping
 	String listar(@RequestParam(defaultValue = "") String nome, @RequestParam(defaultValue = "") String cpf,
 			@RequestParam(required = false) StatusPaciente status, @RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "false") boolean todos,
 			Model model) {
+		if (status == null && !todos) {
+			status = StatusPaciente.ATIVO;
+		}
 		model.addAttribute("pagina", pacienteService.listar(nome, cpf, status, pagina));
 		model.addAttribute("nome", nome);
 		model.addAttribute("cpf", cpf);
 		model.addAttribute("statusSelecionado", status);
+		model.addAttribute("todosStatus", todos);
 		model.addAttribute("statusDisponiveis", StatusPaciente.values());
 		return "pacientes/lista";
 	}

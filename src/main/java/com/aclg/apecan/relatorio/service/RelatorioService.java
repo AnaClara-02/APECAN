@@ -9,6 +9,7 @@ import com.aclg.apecan.financeiro.entity.TipoMovimentacao;
 import com.aclg.apecan.financeiro.repository.MovimentacaoFinanceiraRepository;
 import com.aclg.apecan.paciente.entity.StatusPaciente;
 import com.aclg.apecan.paciente.repository.PacienteRepository;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -42,6 +43,8 @@ public class RelatorioService {
 
 	@Transactional(readOnly = true)
 	public Resultado gerar(LocalDate inicio, LocalDate fim) {
+		if (inicio != null && fim != null && inicio.isAfter(fim))
+			throw new OperacaoInvalidaException("PERIODO_INVALIDO", "A data inicial nao pode ser posterior a data final.");
 		Map<StatusPaciente, Long> ps = new EnumMap<>(StatusPaciente.class);
 		for (var s : StatusPaciente.values())
 			ps.put(s, pacientes.countByStatus(s));

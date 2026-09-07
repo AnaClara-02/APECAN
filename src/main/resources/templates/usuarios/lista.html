@@ -19,7 +19,7 @@
         <a class="botao botao-primario" th:href="@{/usuarios/novo}">Cadastrar funcionário</a>
     </section>
 
-    <div class="alerta alerta-aviso" th:if="${quantidadeAdministradores < 2}">
+    <div class="alerta alerta-aviso alerta-centralizado" role="status" th:if="${quantidadeAdministradores < 2}">
         Há menos de dois administradores ativos. Ative e promova um sucessor.
     </div>
 

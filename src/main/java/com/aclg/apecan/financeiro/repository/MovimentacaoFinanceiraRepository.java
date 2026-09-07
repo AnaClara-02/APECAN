@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 public interface MovimentacaoFinanceiraRepository extends JpaRepository<MovimentacaoFinanceira, Long> {
 
@@ -19,10 +20,13 @@ public interface MovimentacaoFinanceiraRepository extends JpaRepository<Moviment
 		   and (:inicio is null or m.dataMovimentacao >= :inicio)
 		   and (:fim is null or m.dataMovimentacao <= :fim)
 		""")
+	@org.springframework.data.jpa.repository.EntityGraph(attributePaths = "doacao")
 	Page<MovimentacaoFinanceira> pesquisar(@Param("tipo") TipoMovimentacao tipo, @Param("inicio") LocalDate inicio,
 			@Param("fim") LocalDate fim, Pageable p);
 
 	Optional<MovimentacaoFinanceira> findByDoacaoId(Long id);
+
+	List<MovimentacaoFinanceira> findAllByDoacaoIdIn(List<Long> ids);
 
 	@Query(value = """
 		SELECT COALESCE(SUM(

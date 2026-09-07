@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -114,4 +115,29 @@ class SecurityConfigTests {
         assertThat(passwordEncoder.matches("Senha forte de teste", hash)).isTrue();
         assertThat(passwordEncoder.matches("Senha incorreta", hash)).isFalse();
     }
+
+	@Test
+	void exclusaoDeCategoriaDeveExigirAutenticacaoECsrf() throws Exception {
+		mockMvc.perform(post("/equipamentos/categorias/999/excluir"))
+			.andExpect(status().isForbidden());
+		mockMvc.perform(post("/equipamentos/categorias/999/excluir").with(user("comum").roles("USUARIO")))
+			.andExpect(status().isForbidden());
+		mockMvc.perform(post("/equipamentos/categorias/999/excluir")
+				.with(user("comum").roles("USUARIO")).with(csrf()))
+			.andExpect(status().isFound())
+			.andExpect(redirectedUrl("/equipamentos"));
+	}
+
+	@Test
+	void listagensDevemIniciarComFiltroAtivo() throws Exception {
+		var usuario = user("comum").roles("USUARIO");
+		mockMvc.perform(get("/pacientes").with(usuario))
+			.andExpect(model().attribute("statusSelecionado", com.aclg.apecan.paciente.entity.StatusPaciente.ATIVO));
+		mockMvc.perform(get("/voluntarios").with(usuario))
+			.andExpect(model().attribute("statusSelecionado", com.aclg.apecan.voluntario.entity.StatusVoluntario.ATIVO));
+		mockMvc.perform(get("/equipamentos").with(usuario))
+			.andExpect(model().attribute("statusSelecionado", com.aclg.apecan.equipamento.entity.StatusEquipamento.ATIVO));
+		mockMvc.perform(get("/emprestimos").with(usuario))
+			.andExpect(model().attribute("statusSelecionado", com.aclg.apecan.emprestimo.dto.StatusEmprestimoFiltro.ATIVO));
+	}
 }

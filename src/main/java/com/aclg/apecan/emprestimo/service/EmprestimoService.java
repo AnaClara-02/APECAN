@@ -45,9 +45,24 @@ public class EmprestimoService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<EmprestimoDto> listar(boolean apenasAbertos, int pagina) {
+	public Page<EmprestimoDto> listar(StatusEmprestimoFiltro status, int pagina) {
 		Pageable p = PageRequest.of(Math.max(0, pagina), 20, Sort.by("dataEmprestimo").descending());
-		return (apenasAbertos ? emprestimos.findAllByDataDevolucaoIsNull(p) : emprestimos.findAll(p)).map(this::dto);
+		Page<EmprestimoEquipamento> resultado = switch (status) {
+			case ATIVO -> emprestimos.findAllByDataDevolucaoIsNull(p);
+			case INATIVO -> emprestimos.findAllByDataDevolucaoIsNotNull(p);
+			case TODOS -> emprestimos.listarTodos(p);
+		};
+		return resultado.map(this::dto);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<HistoricoEquipamentoDto> historicoEquipamento(Long equipamentoId, int pagina) {
+		Pageable pageable = PageRequest.of(Math.max(0, pagina), 10,
+			Sort.by("dataEmprestimo").descending().and(Sort.by("id").descending()));
+		return emprestimos.findAllByEquipamentoId(equipamentoId, pageable)
+			.map(e -> new HistoricoEquipamentoDto(e.getId(), e.getPaciente().getId(), e.getPaciente().getNome(),
+				e.getDataEmprestimo(), e.getDataPrevistaDevolucao(), e.getDataDevolucao(),
+				e.getEstadoConservacaoDevolucao(), situacao(e)));
 	}
 
 	@Transactional(readOnly = true)
@@ -124,6 +139,13 @@ public class EmprestimoService {
 		return new EmprestimoDto(e.getId(), e.getEquipamento().getId(), e.getEquipamento().getCategoria().getNome(),
 				e.getPaciente().getId(), e.getPaciente().getNome(), e.getDataEmprestimo(), e.getDataPrevistaDevolucao(),
 				e.getDataDevolucao(), atrasado, e.getObservacao());
+	}
+
+	private String situacao(EmprestimoEquipamento e) {
+		if (!e.estaAberto())
+			return "INATIVO";
+		return e.getDataPrevistaDevolucao() != null && e.getDataPrevistaDevolucao().isBefore(LocalDate.now(clock))
+				? "ATRASADO" : "ATIVO";
 	}
 
 }

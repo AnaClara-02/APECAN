@@ -41,10 +41,18 @@ controller -> dto -> service -> repository -> entity
 - pacientes, historico de status e inativacao sem exclusao;
 - voluntarios, categorias e unidades individuais de equipamentos;
 - emprestimos com bloqueio pessimista, versao otimista e devolucao auditada;
+- filtros de pacientes, voluntarios, equipamentos e emprestimos iniciados em
+  `ATIVO`, mantendo as opções `INATIVO` e `TODOS` na navegação paginada;
+- exclusao de categorias somente quando não existe unidade vinculada, com
+  bloqueio transacional contra cadastro concorrente;
+- historico paginado de emprestimos em cada equipamento;
 - doacao monetaria e entrada financeira atomicas;
 - doacao de equipamento e criacao de unidades no estoque atomicas;
 - despesa e movimentacao de saida atomicas;
-- filtros, paginacao e painel de relatorios.
+- filtros, paginacao e painel de relatorios;
+- exportacoes detalhadas PDF/XLSX com CPF mascarado, proteção contra formulas
+  em planilhas e auditoria;
+- modo noturno acessível, com preferência persistida no navegador.
 
 ## Banco e configuracao
 
@@ -56,6 +64,8 @@ O Flyway e o unico responsavel por evoluir o esquema. Nenhuma migracao aplicada 
 - V4: eventos de redefinicao e alteracao de senha;
 - V5: autoria e concorrencia de equipamentos e devolucoes;
 - V6: previsao de devolucao e indice de emprestimos atrasados.
+- V7: normalizacao dos telefones brasileiros com código do país `55`;
+- V8: historico seguro das exportacoes de relatorios.
 
 Credenciais locais ficam em `config/application-local.properties`, ignorado pelo Git. O arquivo contem apenas URL, usuario e senha do PostgreSQL tecnico. Senhas, tokens, chaves e dados pessoais reais nunca devem ser adicionados a arquivos versionados.
 
@@ -90,15 +100,19 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 - ambos os perfis operam modulos funcionais;
 - registros de negocio sao inativados, nunca excluidos pela interface;
 - CPFs sao persistidos com 11 numeros;
-- dados reais nao sao usados em desenvolvimento ou demonstracao;
+- dados reais somente podem ser usados em infraestrutura de producao aprovada;
+- ambientes gratuitos e demonstrações recebem apenas dados ficticios ou anonimizados;
 - segredos nunca sao versionados.
 
 ## Proximos passos
 
-- ampliar testes MVC de cada formulario e cenarios de concorrencia real;
+- ampliar testes de concorrencia real para exclusao/cadastro de categorias;
 - instalar Docker localmente para executar a validacao PostgreSQL/Testcontainers;
 - realizar teste de usabilidade com dados totalmente ficticios;
 - revisar com a APECAN a obrigatoriedade da nota fiscal e os relatorios;
-- configurar SMTP, HTTPS, backups e restauracao antes de qualquer piloto;
+- configurar SMTP, HTTPS, backups, restauracao e infraestrutura privada antes
+  de inserir dados reais;
+- persistir sessoes HTTP e tentativas de login antes de escalar o backend para
+  mais de uma instancia;
 - criar armazenamento protegido para fotos antes de habilitar uploads;
 - preparar implantacao e observabilidade sem registrar dados pessoais.

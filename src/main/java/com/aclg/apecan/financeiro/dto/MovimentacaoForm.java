@@ -12,6 +12,7 @@ public class MovimentacaoForm {
 
 	@NotNull
 	@DecimalMin("0.01")
+	@Digits(integer = 10, fraction = 2)
 	private BigDecimal valor;
 
 	@NotNull

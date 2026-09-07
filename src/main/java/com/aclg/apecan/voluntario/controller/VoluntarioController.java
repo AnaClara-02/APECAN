@@ -23,11 +23,14 @@ public class VoluntarioController {
 
 	@GetMapping
 	String listar(@RequestParam(defaultValue = "") String nome, @RequestParam(required = false) StatusVoluntario status,
-			@RequestParam(defaultValue = "0") int pagina, Model m) {
+			@RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "false") boolean todos, Model m) {
+		if (status == null && !todos)
+			status = StatusVoluntario.ATIVO;
 		m.addAttribute("pagina", service.listar(nome, status, pagina));
 		m.addAttribute("nome", nome);
 		m.addAttribute("statusDisponiveis", StatusVoluntario.values());
 		m.addAttribute("statusSelecionado", status);
+		m.addAttribute("todosStatus", todos);
 		return "voluntarios/lista";
 	}
 

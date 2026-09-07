@@ -17,10 +17,16 @@ import com.aclg.apecan.equipamento.entity.StatusEquipamento;
 import com.aclg.apecan.equipamento.repository.EquipamentoRepository;
 import com.aclg.apecan.equipamento.service.EquipamentoService;
 import com.aclg.apecan.financeiro.entity.TipoMovimentacao;
+import com.aclg.apecan.financeiro.dto.MovimentacaoForm;
 import com.aclg.apecan.financeiro.repository.MovimentacaoFinanceiraRepository;
 import com.aclg.apecan.financeiro.service.FinanceiroService;
 import com.aclg.apecan.paciente.dto.NovoPacienteForm;
 import com.aclg.apecan.paciente.service.PacienteService;
+import com.aclg.apecan.relatorio.entity.FormatoRelatorio;
+import com.aclg.apecan.relatorio.entity.TipoRelatorio;
+import com.aclg.apecan.relatorio.repository.HistoricoExportacaoRepository;
+import com.aclg.apecan.relatorio.service.RelatorioExportacaoService;
+import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.usuario.dto.NovoUsuarioForm;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
@@ -36,10 +42,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 @SpringBootTest
 @Transactional
@@ -80,6 +89,12 @@ class ModulosOperacionaisServiceTests {
 
 	@Autowired
 	DespesaRepository despesas;
+
+	@Autowired
+	RelatorioExportacaoService exportacoes;
+
+	@Autowired
+	HistoricoExportacaoRepository historicoExportacoes;
 
 	@AfterEach
 	void limpar() {
@@ -137,6 +152,48 @@ class ModulosOperacionaisServiceTests {
 		assertThat(despesas.count()).isEqualTo(1);
 		assertThat(movimentos.count()).isEqualTo(2);
 		assertThat(financeiro.saldo(null, null)).isEqualByComparingTo("75.50");
+	}
+
+	@Test
+	void deveExcluirSomenteCategoriaSemEquipamentos() {
+		autenticar(administrador());
+		CategoriaEquipamentoForm vazia = new CategoriaEquipamentoForm();
+		vazia.setNome("Categoria vazia");
+		Long vaziaId = equipamentosService.cadastrarCategoria(vazia);
+		equipamentosService.excluirCategoria(vaziaId);
+		assertThat(equipamentosService.categorias()).noneMatch(c -> c.getId().equals(vaziaId));
+
+		CategoriaEquipamentoForm utilizada = new CategoriaEquipamentoForm();
+		utilizada.setNome("Categoria utilizada");
+		Long utilizadaId = equipamentosService.cadastrarCategoria(utilizada);
+		EquipamentoForm equipamento = new EquipamentoForm();
+		equipamento.setCategoriaId(utilizadaId);
+		equipamento.setEstadoConservacao(EstadoConservacao.BOM);
+		equipamentosService.cadastrar(equipamento);
+
+		assertThatThrownBy(() -> equipamentosService.excluirCategoria(utilizadaId))
+			.isInstanceOf(OperacaoInvalidaException.class)
+			.hasMessageContaining("possui equipamentos");
+	}
+
+	@Test
+	void deveGerarPdfEXlsxSegurosEAuditarAsExportacoes() throws Exception {
+		autenticar(administrador());
+		MovimentacaoForm formulario = new MovimentacaoForm();
+		formulario.setTipo(TipoMovimentacao.ENTRADA);
+		formulario.setValor(new BigDecimal("10.00"));
+		formulario.setData(LocalDate.now());
+		formulario.setDestino("=2+2");
+		formulario.setDescricao("Valor iniciado por formula");
+		financeiro.registrar(formulario);
+
+		var xlsx = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.XLSX, null, null);
+		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx.conteudo()))) {
+			assertThat(workbook.getSheetAt(0).getRow(4).getCell(4).getStringCellValue()).isEqualTo("'=2+2");
+		}
+		var pdf = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.PDF, null, null);
+		assertThat(new String(pdf.conteudo(), 0, 4, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+		assertThat(historicoExportacoes.count()).isEqualTo(2);
 	}
 
 	private Usuario administrador() {

@@ -11,29 +11,33 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
+import java.time.Clock;
 
 @Controller
 @RequestMapping("/emprestimos")
 public class EmprestimoController {
 
 	private final EmprestimoService service;
+	private final Clock clock;
 
-	public EmprestimoController(EmprestimoService s) {
+	public EmprestimoController(EmprestimoService s, Clock clock) {
 		service = s;
+		this.clock = clock;
 	}
 
 	@GetMapping
-	String listar(@RequestParam(defaultValue = "true") boolean abertos, @RequestParam(defaultValue = "0") int pagina,
+	String listar(@RequestParam(defaultValue = "ATIVO") StatusEmprestimoFiltro status, @RequestParam(defaultValue = "0") int pagina,
 			Model m) {
-		m.addAttribute("pagina", service.listar(abertos, pagina));
-		m.addAttribute("abertos", abertos);
+		m.addAttribute("pagina", service.listar(status, pagina));
+		m.addAttribute("statusSelecionado", status);
+		m.addAttribute("statusDisponiveis", StatusEmprestimoFiltro.values());
 		return "emprestimos/lista";
 	}
 
 	@GetMapping("/novo")
 	String novo(Model m) {
 		EmprestimoForm f = new EmprestimoForm();
-		f.setDataEmprestimo(LocalDate.now());
+		f.setDataEmprestimo(LocalDate.now(clock));
 		preparar(f, m);
 		return "emprestimos/novo";
 	}
@@ -60,7 +64,7 @@ public class EmprestimoController {
 	String detalhe(@PathVariable Long id, Model m) {
 		m.addAttribute("emprestimo", service.buscar(id));
 		DevolucaoForm f = new DevolucaoForm();
-		f.setDataDevolucao(LocalDate.now());
+		f.setDataDevolucao(LocalDate.now(clock));
 		m.addAttribute("devolucaoForm", f);
 		m.addAttribute("conservacoes", EstadoConservacao.values());
 		return "emprestimos/detalhe";
