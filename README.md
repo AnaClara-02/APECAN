@@ -3,6 +3,9 @@
 Sistema integrado para administracao e gerenciamento da APECAN, desenvolvido
 com Spring Boot, Thymeleaf, Spring Security, PostgreSQL e Flyway.
 
+Documentação técnica, decisões deste chat, limitações e próximos passos:
+[Contexto do projeto](docs/CONTEXTO_DO_PROJETO.md).
+
 ## Funcionalidades
 
 - usuarios, ativacao, login, recuperacao e alteracao de senha;
@@ -15,6 +18,7 @@ com Spring Boot, Thymeleaf, Spring Security, PostgreSQL e Flyway.
 - filtros de status iniciados em itens ativos e historico de cada equipamento;
 - exportacao detalhada de relatorios em PDF e XLSX, com auditoria;
 - tema claro ou noturno persistido no navegador.
+- backup completo manual, criptografado e recuperável localmente.
 
 ## Configuracao local
 
@@ -76,10 +80,49 @@ O esquema é criado e evoluído somente pelas migrações de
 `src/main/resources/db/migration`. Migrações aplicadas nunca devem ser
 editadas; uma mudança exige um novo arquivo `Vn__descricao.sql`.
 
-A migração atual é a V8, que cria a auditoria das exportações de relatórios.
+A migração atual é a V9, que cria a auditoria de backups e restaurações.
 As exportações não armazenam os arquivos no servidor: eles são gerados sob
 demanda, enviados com `Cache-Control: no-store` e registrados apenas por tipo,
 formato, filtros não pessoais, quantidade, responsável e data.
+
+## Backup e recuperação
+
+Administradores acessam `Administração > Backup`, confirmam a própria senha e
+definem uma senha exclusiva de pelo menos 14 caracteres para baixar um arquivo
+`.apecan-backup`. O arquivo usa `pg_dump` em formato customizado, manifesto,
+checksums e criptografia AES-256-GCM. A senha nunca é armazenada; sem ela, não
+há como abrir o backup.
+
+Configure os executáveis do PostgreSQL quando eles não estiverem no `PATH`:
+
+```properties
+apecan.backup.pg-dump-path=C:/Program Files/PostgreSQL/18/bin/pg_dump.exe
+apecan.backup.pg-restore-path=C:/Program Files/PostgreSQL/18/bin/pg_restore.exe
+apecan.backup.diretorio-temporario=C:/APECAN/temp
+```
+
+Em uma instalação vazia, o botão de restauração aparece no login somente ao
+abrir a aplicação no próprio servidor. Em uma instalação que já possui
+usuários, pare o serviço e execute, em PowerShell administrativo:
+
+```powershell
+.\scripts\apecan-recovery.ps1
+```
+
+Durante o desenvolvimento, informe explicitamente a configuração local:
+
+```powershell
+.\scripts\apecan-recovery.ps1 `
+  -JarPath .\target\apecan-0.0.1-SNAPSHOT.jar `
+  -ConfigFile .\config\application-local.properties `
+  -ServiceName ""
+```
+
+O script inicia temporariamente a recuperação em
+`http://127.0.0.1:8090/recuperacao`, inacessível pela rede. Depois da
+restauração, todos precisam entrar novamente e tokens antigos de ativação ou
+redefinição são invalidados. Nunca mantenha a única cópia no mesmo disco do
+servidor.
 
 O Java de compilação e implantação é o Java 25 LTS.
 
@@ -93,6 +136,8 @@ O Java de compilação e implantação é o Java 25 LTS.
 - cada administrador possui conta individual;
 - o último administrador ativo não pode ser desativado ou rebaixado;
 - alterações de perfil e status ficam registradas no histórico administrativo.
+- restauração completa só é aceita localmente em instalação vazia ou no perfil
+  restrito de recuperação.
 
 ## Cuidados antes da produção
 

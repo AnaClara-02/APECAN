@@ -46,6 +46,9 @@
                 <a class="item-menu" th:href="@{/usuarios}" th:classappend="${#strings.startsWith(caminhoAtual, '/usuarios')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/usuarios')} ? 'page' : null">
                     <svg aria-hidden="true"><use th:href="@{/images/icons.svg#usuarios}"></use></svg><span>Usuários</span>
                 </a>
+                <a class="item-menu" th:href="@{/administracao/backups}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups')} ? 'page' : null">
+                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Backup</span>
+                </a>
             </th:block>
         </nav>
         <div class="rodape-menu">

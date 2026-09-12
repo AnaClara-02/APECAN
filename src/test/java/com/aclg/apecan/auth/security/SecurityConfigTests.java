@@ -65,7 +65,40 @@ class SecurityConfigTests {
         mockMvc.perform(get("/api/usuarios").with(user("comum").roles("USUARIO")))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.codigo").value("ACESSO_NEGADO"));
+
+		mockMvc.perform(get("/administracao/backups").with(user("comum").roles("USUARIO")))
+			.andExpect(status().isForbidden());
     }
+
+	@Test
+	void painelDeBackupDeveSerExclusivoDoAdministradorEExigirCsrf() throws Exception {
+		mockMvc.perform(get("/administracao/backups").with(user("admin").roles("ADMINISTRADOR")))
+			.andExpect(status().isOk());
+
+		mockMvc.perform(post("/administracao/backups/exportar")
+				.with(user("admin").roles("ADMINISTRADOR")))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void painelDeBackupDeveExibirErroNaConfirmacaoDaSenha() throws Exception {
+		mockMvc.perform(post("/administracao/backups/exportar")
+				.with(user("admin").roles("ADMINISTRADOR"))
+				.with(csrf())
+				.param("senhaAtual", "senha-atual")
+				.param("senhaBackup", "senha-de-backup-segura")
+				.param("confirmacaoSenhaBackup", "confirmacao-diferente"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeHasFieldErrors("exportarBackupForm", "confirmacaoSenhaBackup"));
+	}
+
+	@Test
+	void recuperacaoRemotaDeveSerNegadaAntesDoUpload() throws Exception {
+		mockMvc.perform(get("/recuperacao").with(request -> {
+			request.setRemoteAddr("192.168.1.25");
+			return request;
+		})).andExpect(status().isForbidden());
+	}
 
     @Test
 	void postSemCsrfDeveSerRejeitado() throws Exception {

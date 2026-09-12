@@ -46,6 +46,9 @@
         <button class="botao botao-primario" type="submit">Entrar com segurança</button>
     </form>
     <p class="autenticacao-rodape"><a th:href="@{/esqueci-senha}">Esqueci minha senha</a></p>
+    <p class="autenticacao-rodape" th:if="${recuperacaoDisponivel}">
+        <a class="botao botao-secundario" th:href="@{/recuperacao}">Restaurar backup</a>
+    </p>
 </main>
 </body>
 </html>

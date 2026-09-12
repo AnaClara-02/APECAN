@@ -49,6 +49,7 @@ application-secrets.*
 *.log
 *.dump
 *.backup
+*.apecan-backup
 *.bak
 /logs/
 /uploads/

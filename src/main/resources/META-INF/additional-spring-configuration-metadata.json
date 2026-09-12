@@ -1,0 +1,74 @@
+{
+  "properties": [
+    {
+      "name": "apecan.ativacao.entrega",
+      "type": "java.lang.String",
+      "description": "Adaptador usado para entregar links de ativacao de conta.",
+      "defaultValue": "local"
+    },
+    {
+      "name": "apecan.ativacao.validade",
+      "type": "java.time.Duration",
+      "description": "Prazo de validade do token de ativacao de conta.",
+      "defaultValue": "24h"
+    },
+    {
+      "name": "apecan.redefinicao.entrega",
+      "type": "java.lang.String",
+      "description": "Adaptador usado para entregar links de redefinicao de senha.",
+      "defaultValue": "local"
+    },
+    {
+      "name": "apecan.redefinicao.validade",
+      "type": "java.time.Duration",
+      "description": "Prazo de validade do token de redefinicao de senha.",
+      "defaultValue": "1h"
+    },
+    {
+      "name": "apecan.login.limite-tentativas",
+      "type": "java.lang.Integer",
+      "description": "Quantidade de falhas de autenticacao permitidas antes do bloqueio temporario.",
+      "defaultValue": 5
+    },
+    {
+      "name": "apecan.login.janela",
+      "type": "java.time.Duration",
+      "description": "Janela de tempo usada para contabilizar tentativas de autenticacao.",
+      "defaultValue": "15m"
+    },
+    {
+      "name": "apecan.login.bloqueio-inicial",
+      "type": "java.time.Duration",
+      "description": "Duracao do primeiro bloqueio causado por tentativas repetidas.",
+      "defaultValue": "1m"
+    },
+    {
+      "name": "apecan.login.bloqueio-maximo",
+      "type": "java.time.Duration",
+      "description": "Duracao maxima do bloqueio progressivo de autenticacao.",
+      "defaultValue": "15m"
+    },
+    {
+      "name": "apecan.url-publica",
+      "type": "java.lang.String",
+      "description": "Endereco publico base usado na construcao de links de ativacao e redefinicao.",
+      "defaultValue": "http://localhost:8080"
+    }
+  ],
+  "hints": [
+    {
+      "name": "apecan.ativacao.entrega",
+      "values": [
+        { "value": "local", "description": "Exibe o link localmente durante o desenvolvimento." },
+        { "value": "email", "description": "Envia o link pelo servidor SMTP configurado." }
+      ]
+    },
+    {
+      "name": "apecan.redefinicao.entrega",
+      "values": [
+        { "value": "local", "description": "Exibe o link localmente durante o desenvolvimento." },
+        { "value": "email", "description": "Envia o link pelo servidor SMTP configurado." }
+      ]
+    }
+  ]
+}

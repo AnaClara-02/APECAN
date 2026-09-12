@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recuperar APECAN</title>
+    <script th:src="@{/js/theme-init.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="pagina-centralizada">
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+<main id="conteudo-principal" class="cartao autenticacao recuperacao">
+    <div th:replace="~{fragments/cabecalho :: marca-publica}"></div>
+    <p class="rotulo">Recuperação local</p>
+    <h1>Restaurar backup</h1>
+    <div class="alerta alerta-aviso" role="alert">
+        A restauração substitui os dados atuais. Registros criados depois do backup serão perdidos.
+    </div>
+    <p class="texto-secundario">Selecione somente um arquivo <code>.apecan-backup</code> criado pelo próprio sistema.</p>
+
+    <form class="formulario" th:action="@{/recuperacao}" th:object="${restaurarBackupForm}"
+          method="post" enctype="multipart/form-data">
+        <div class="alerta alerta-erro" role="alert" th:if="${#fields.hasGlobalErrors()}"
+             th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
+
+        <label for="arquivo">Arquivo de backup</label>
+        <input id="arquivo" type="file" th:field="*{arquivo}" accept=".apecan-backup" required>
+        <small class="erro-campo" th:errors="*{arquivo}"></small>
+
+        <label for="senhaBackup">Senha do backup</label>
+        <input id="senhaBackup" type="password" th:field="*{senhaBackup}" autocomplete="off" required>
+        <small class="erro-campo" th:errors="*{senhaBackup}"></small>
+
+        <label class="confirmacao-destrutiva">
+            <input type="checkbox" required>
+            Entendo que os dados atuais serão substituídos.
+        </label>
+        <button class="botao botao-perigo" type="submit">Validar e restaurar</button>
+    </form>
+    <p class="autenticacao-rodape"><a th:href="@{/login}">Voltar ao login</a></p>
+</main>
+</body>
+</html>

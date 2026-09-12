@@ -1,5 +1,6 @@
 package com.aclg.apecan.auth.security;
 
+import com.aclg.apecan.backup.service.RecuperacaoDisponibilidadeService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -9,12 +10,14 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -38,17 +41,25 @@ public class SecurityConfig {
 	@Bean
 	@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 	SecurityFilterChain securityFilterChain(HttpSecurity http, ApiAuthenticationEntryPoint apiAuthenticationEntryPoint,
-			ApiAccessDeniedHandler apiAccessDeniedHandler, SessionRegistry sessionRegistry) throws Exception {
+			ApiAccessDeniedHandler apiAccessDeniedHandler, SessionRegistry sessionRegistry,
+			RecuperacaoDisponibilidadeService recuperacaoDisponibilidade) throws Exception {
 		RequestMatcher requisicaoApi = request -> {
 			String caminho = request.getRequestURI().substring(request.getContextPath().length());
 			return caminho.equals("/api") || caminho.startsWith("/api/");
 		};
+		RequestMatcher requisicaoRecuperacao = request -> {
+			String caminho = request.getRequestURI().substring(request.getContextPath().length());
+			return caminho.equals("/recuperacao") || caminho.startsWith("/recuperacao/");
+		};
 
 		http.authorizeHttpRequests(autorizacao -> autorizacao
+			.requestMatchers("/recuperacao", "/recuperacao/**")
+			.access((authentication, context) -> new AuthorizationDecision(
+				recuperacaoDisponibilidade.permitida(context.getRequest())))
 			.requestMatchers("/login", "/ativar-conta", "/esqueci-senha", "/redefinir-senha", "/error", "/error/**",
 					"/css/**", "/js/**", "/images/**", "/fonts/**", "/actuator/health", "/actuator/health/**")
 			.permitAll()
-			.requestMatchers("/usuarios/**", "/configuracoes/**", "/api/usuarios/**", "/api/configuracoes/**",
+			.requestMatchers("/usuarios/**", "/configuracoes/**", "/administracao/**", "/api/usuarios/**", "/api/configuracoes/**",
 					"/actuator/info")
 			.hasRole("ADMINISTRADOR")
 			.anyRequest()
@@ -74,6 +85,8 @@ public class SecurityConfig {
 			.csrf(Customizer.withDefaults())
 			.exceptionHandling(
 					excecoes -> excecoes.defaultAuthenticationEntryPointFor(apiAuthenticationEntryPoint, requisicaoApi)
+						.defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.FORBIDDEN),
+								requisicaoRecuperacao)
 						.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
 								AnyRequestMatcher.INSTANCE)
 						.defaultAccessDeniedHandlerFor(apiAccessDeniedHandler, requisicaoApi))

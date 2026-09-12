@@ -22,4 +22,10 @@ public class SessaoUsuarioService {
                 .getAllSessions(principal, false)
                 .forEach(SessionInformation::expireNow));
     }
+
+    public void encerrarTodasSessoes() {
+        sessionRegistry.getAllPrincipals().forEach(principal -> sessionRegistry
+            .getAllSessions(principal, false)
+            .forEach(SessionInformation::expireNow));
+    }
 }
