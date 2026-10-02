@@ -101,6 +101,11 @@ public class BackupCriptografiaService {
 		try {
 			Path raiz = properties.getDiretorioTemporario().toAbsolutePath().normalize();
 			Files.createDirectories(raiz);
+			if (java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+				return Files.createTempDirectory(raiz, prefixo,
+					java.nio.file.attribute.PosixFilePermissions.asFileAttribute(
+						java.nio.file.attribute.PosixFilePermissions.fromString("rwx------")));
+			}
 			return Files.createTempDirectory(raiz, prefixo);
 		}
 		catch (IOException exception) {

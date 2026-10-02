@@ -56,8 +56,8 @@ public class Paciente extends EntidadeAuditavel {
     @Column(nullable = false, length = 10)
     private StatusPaciente status = StatusPaciente.ATIVO;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "criado_por_usuario_id", nullable = false,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "criado_por_usuario_id",
         foreignKey = @ForeignKey(name = "fk_pacientes_criado_por"))
     private Usuario criadoPor;
 
@@ -65,6 +65,15 @@ public class Paciente extends EntidadeAuditavel {
     @JoinColumn(name = "atualizado_por_usuario_id",
         foreignKey = @ForeignKey(name = "fk_pacientes_atualizado_por"))
     private Usuario atualizadoPor;
+
+    @Column(name = "criado_por_nome_historico", length = 150, insertable = false, updatable = false)
+    private String criadoPorNomeHistorico;
+
+    @Column(name = "atualizado_por_nome_historico", length = 150, insertable = false, updatable = false)
+    private String atualizadoPorNomeHistorico;
+
+    @Column(name = "importado_em", insertable = false, updatable = false)
+    private LocalDateTime importadoEm;
 
     @Column(name = "desativado_em")
     private LocalDateTime desativadoEm;
@@ -126,5 +135,8 @@ public class Paciente extends EntidadeAuditavel {
     public StatusPaciente getStatus() { return status; }
     public Usuario getCriadoPor() { return criadoPor; }
     public Usuario getAtualizadoPor() { return atualizadoPor; }
+    public String getNomeCriador() { return criadoPor != null ? criadoPor.getNome() : criadoPorNomeHistorico; }
+    public String getNomeAtualizador() { return atualizadoPor != null ? atualizadoPor.getNome() : atualizadoPorNomeHistorico; }
+    public LocalDateTime getImportadoEm() { return importadoEm; }
     public LocalDateTime getDesativadoEm() { return desativadoEm; }
 }

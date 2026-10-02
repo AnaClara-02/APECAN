@@ -480,6 +480,26 @@ public class UsuarioService {
         return TelefoneNormalizer.normalizar(telefone);
     }
 
+    /** Exclusivo do comando bootstrap: recupera uma falha de entrega antes do primeiro login. */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public AtivacaoEmitida reemitirPrimeiraAtivacao() {
+        if (usuarioRepository.count() != 1) {
+            throw new OperacaoInvalidaException("CONFIGURACAO_INICIAL_CONCLUIDA",
+                "A reemissão inicial exige uma única conta pendente.");
+        }
+        Usuario usuario = usuarioRepository.findAll().getFirst();
+        if (usuario.getTipoPerfil() != TipoPerfil.ADMINISTRADOR || usuario.estaAtivado()
+                || usuario.getStatus() != StatusUsuario.ATIVO) {
+            throw new OperacaoInvalidaException("CONFIGURACAO_INICIAL_CONCLUIDA",
+                "A configuração inicial já foi concluída.");
+        }
+        AtivacaoEmitida ativacao = ativacaoService.emitir(usuario);
+        registrar(usuario, null, TipoEventoAdministracaoUsuario.REEMISSAO_ATIVACAO,
+            usuario.getTipoPerfil(), usuario.getTipoPerfil(), usuario.getStatus(), usuario.getStatus(),
+            "Reemissão inicial solicitada pelo comando local.");
+        return ativacao;
+    }
+
     private String normalizarTexto(String texto) {
         if (texto == null || texto.isBlank()) {
             throw new OperacaoInvalidaException(

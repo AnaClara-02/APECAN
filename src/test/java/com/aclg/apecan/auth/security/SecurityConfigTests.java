@@ -75,21 +75,18 @@ class SecurityConfigTests {
 		mockMvc.perform(get("/administracao/backups").with(user("admin").roles("ADMINISTRADOR")))
 			.andExpect(status().isOk());
 
-		mockMvc.perform(post("/administracao/backups/exportar")
+		mockMvc.perform(post("/administracao/backups/exportacao")
 				.with(user("admin").roles("ADMINISTRADOR")))
 			.andExpect(status().isForbidden());
 	}
 
 	@Test
-	void painelDeBackupDeveExibirErroNaConfirmacaoDaSenha() throws Exception {
-		mockMvc.perform(post("/administracao/backups/exportar")
+	void painelDeBackupDeveExigirSenhaAtual() throws Exception {
+		mockMvc.perform(post("/administracao/backups/exportacao")
 				.with(user("admin").roles("ADMINISTRADOR"))
-				.with(csrf())
-				.param("senhaAtual", "senha-atual")
-				.param("senhaBackup", "senha-de-backup-segura")
-				.param("confirmacaoSenhaBackup", "confirmacao-diferente"))
+				.with(csrf()))
 			.andExpect(status().isOk())
-			.andExpect(model().attributeHasFieldErrors("exportarBackupForm", "confirmacaoSenhaBackup"));
+			.andExpect(model().attributeHasFieldErrors("exportarBackupSqlForm", "senhaAtual"));
 	}
 
 	@Test

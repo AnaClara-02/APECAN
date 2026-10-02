@@ -40,6 +40,13 @@ public class BackupAuditoriaService {
 				""", resultado.name(), limitar(versao, 50), checksum, limitar(codigoFalha, 60), LocalDateTime.now(clock));
 	}
 
+	public void registrarImportacaoSql(ResultadoBackup resultado, String versao, String checksum,
+			String codigoFalha, Usuario responsavel) {
+		repository.save(new HistoricoBackup(OperacaoBackup.RESTAURACAO, resultado,
+			OrigemBackup.PAINEL_ADMINISTRATIVO, limitar(versao, 50), checksum,
+			limitar(codigoFalha, 60), responsavel, LocalDateTime.now(clock)));
+	}
+
 	private String limitar(String valor, int tamanho) {
 		return valor == null || valor.length() <= tamanho ? valor : valor.substring(0, tamanho);
 	}

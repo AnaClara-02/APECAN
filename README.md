@@ -6,6 +6,11 @@ com Spring Boot, Thymeleaf, Spring Security, PostgreSQL e Flyway.
 Documentação técnica, decisões deste chat, limitações e próximos passos:
 [Contexto do projeto](docs/CONTEXTO_DO_PROJETO.md).
 
+Preparação de hospedagem, configuração de segredos, primeiro administrador e
+recuperação técnica: [Render, Neon e Brevo](docs/HOSPEDAGEM_RENDER_NEON_BREVO.md).
+O perfil Render usa API HTTPS do Brevo, não SMTP. Dockerfile e Blueprint estão
+incluídos; nenhum deploy ou envio do banco local é automático.
+
 ## Funcionalidades
 
 - usuarios, ativacao, login, recuperacao e alteracao de senha;
@@ -18,7 +23,7 @@ Documentação técnica, decisões deste chat, limitações e próximos passos:
 - filtros de status iniciados em itens ativos e historico de cada equipamento;
 - exportacao detalhada de relatorios em PDF e XLSX, com auditoria;
 - tema claro ou noturno persistido no navegador.
-- backup completo manual, criptografado e recuperável localmente.
+- backup operacional manual em SQL, sem contas de acesso e com importação transacional.
 
 ## Configuracao local
 
@@ -80,34 +85,28 @@ O esquema é criado e evoluído somente pelas migrações de
 `src/main/resources/db/migration`. Migrações aplicadas nunca devem ser
 editadas; uma mudança exige um novo arquivo `Vn__descricao.sql`.
 
-A migração atual é a V9, que cria a auditoria de backups e restaurações.
+A migração atual é a V11. Ela preserva a autoria histórica dos registros
+transportados sem levar contas de acesso; a V10 persiste controles de acesso
+com identificadores HMAC.
 As exportações não armazenam os arquivos no servidor: eles são gerados sob
 demanda, enviados com `Cache-Control: no-store` e registrados apenas por tipo,
 formato, filtros não pessoais, quantidade, responsável e data.
 
 ## Backup e recuperação
 
-Administradores acessam `Administração > Backup`, confirmam a própria senha e
-definem uma senha exclusiva de pelo menos 14 caracteres para baixar um arquivo
-`.apecan-backup`. O arquivo usa `pg_dump` em formato customizado, manifesto,
-checksums e criptografia AES-256-GCM. A senha nunca é armazenada; sem ela, não
-há como abrir o backup.
+Administradores usam **Backup > Exportação** para gerar um arquivo `.sql` com
+os dados operacionais. Pacientes, voluntários, equipamentos, empréstimos,
+doações e financeiro são incluídos, juntamente com os nomes históricos dos
+autores. Contas, senhas, tokens, sessões e permissões não são exportados.
 
-Configure os executáveis do PostgreSQL quando eles não estiverem no `PATH`:
+O SQL não é criptografado e contém dados pessoais legíveis. Ele deve ser
+guardado em mídia protegida e fora do computador servidor.
 
-```properties
-apecan.backup.pg-dump-path=C:/Program Files/PostgreSQL/18/bin/pg_dump.exe
-apecan.backup.pg-restore-path=C:/Program Files/PostgreSQL/18/bin/pg_restore.exe
-apecan.backup.diretorio-temporario=C:/APECAN/temp
-```
-
-Em uma instalação vazia, o botão de restauração aparece no login somente ao
-abrir a aplicação no próprio servidor. Em uma instalação que já possui
-usuários, pare o serviço e execute, em PowerShell administrativo:
-
-```powershell
-.\scripts\apecan-recovery.ps1
-```
+Em **Backup > Importação**, o APECAN aceita somente a estrutura SQL gerada por
+ele próprio. Antes da substituição, exibe nome, data, tamanho e quantidade de
+registros do arquivo ao lado das informações dos dados atuais. A confirmação
+exige a senha do administrador, preserva as contas da instalação e aplica toda
+a substituição em uma única transação.
 
 Durante o desenvolvimento, informe explicitamente a configuração local:
 
@@ -141,9 +140,12 @@ O Java de compilação e implantação é o Java 25 LTS.
 
 ## Cuidados antes da produção
 
-Dados reais exigem infraestrutura de produção com HTTPS, banco privado,
+Dados reais exigem infraestrutura de produção com HTTPS, banco protegido,
 backups e restauração testada, segredos gerenciados pela hospedagem e controle
-de acesso operacional. Planos gratuitos devem ser usados somente com dados
-fictícios ou anonimizados. Antes de executar mais de uma instância do backend,
-as sessões HTTP e o controle de tentativas de login precisam ser persistidos em
-armazenamento compartilhado.
+de acesso operacional. Homologar a implantação gratuita somente com dados
+fictícios ou anonimizados. O uso cotidiano com dados reais depende dos critérios
+de liberação do guia de hospedagem; o Render desaconselha Free para produção.
+Antes de executar mais de uma instância, persistir sessões HTTP em armazenamento
+compartilhado e revisar a invalidação das sessões. Os controles de tentativas de
+login e recuperação já são persistidos no PostgreSQL pela V10; a V11 implementa
+o transporte SQL dos dados operacionais sem transportar contas.

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: apecan
+    runtime: docker
+    plan: free
+    region: virginia
+    autoDeployTrigger: "off"
+    healthCheckPath: /actuator/health/liveness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod,render
+      - key: APECAN_PUBLIC_URL
+        sync: false
+      - key: APECAN_DB_URL
+        sync: false
+      - key: APECAN_DB_USERNAME
+        sync: false
+      - key: APECAN_DB_PASSWORD
+        sync: false
+      - key: APECAN_DB_MIGRATION_USERNAME
+        sync: false
+      - key: APECAN_DB_MIGRATION_PASSWORD
+        sync: false
+      - key: APECAN_BREVO_API_KEY
+        sync: false
+      - key: APECAN_MAIL_FROM
+        sync: false
+      - key: APECAN_ACCESS_HMAC_KEY
+        generateValue: true

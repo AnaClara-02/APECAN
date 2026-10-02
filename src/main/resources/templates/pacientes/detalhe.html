@@ -23,7 +23,11 @@
                 <dt>Endereço</dt><dd th:text="${paciente.endereco}">Endereço</dd>
                 <dt>Tratamento</dt><dd th:text="${paciente.localTratamento}">Local</dd>
                 <dt>Status</dt><dd th:text="${paciente.status}">ATIVO</dd>
-                <dt>Cadastrado por</dt><dd th:text="${paciente.criadoPor}">Usuario</dd>
+                <dt>Cadastrado por</dt><dd>
+                    <span th:text="${paciente.criadoPor}">Usuário</span>
+                    <span th:text="${' em ' + #temporals.format(paciente.criadoEm, 'dd/MM/yyyy')}"> em 01/01/2026</span>
+                    <span th:if="${paciente.importadoEm != null}" th:text="${' — Importado em ' + #temporals.format(paciente.importadoEm, 'dd/MM/yyyy')}"></span>
+                </dd>
             </dl>
         </article>
         <article class="cartao" th:if="${paciente.podeAlterarStatus()}">

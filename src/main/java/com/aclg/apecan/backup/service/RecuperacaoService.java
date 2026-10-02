@@ -70,6 +70,7 @@ public class RecuperacaoService {
 		BackupManifest manifesto = null;
 		String checksumArquivo = null;
 		boolean bancoAlterado = false;
+		boolean preservarSeguranca = false;
 		try {
 			trabalho = criptografia.criarDiretorioTemporario("apecan-upload-");
 			Path arquivo = trabalho.resolve("entrada.apecan-backup");
@@ -82,10 +83,9 @@ public class RecuperacaoService {
 					throw new OperacaoInvalidaException("VERSAO_BACKUP_INCOMPATIVEL",
 						"Este backup foi criado por uma versão mais nova. Atualize o APECAN antes de restaurar.");
 				}
-				if (usuarioRepository.count() > 0) {
-					seguranca = trabalho.resolve("estado-anterior.dump");
-					postgreSql.exportar(seguranca);
-				}
+				// Mesmo uma instalacao sem usuarios possui esquema/Flyway que precisa de reversao.
+				seguranca = trabalho.resolve("estado-anterior.dump");
+				postgreSql.exportar(seguranca);
 				postgreSql.restaurar(extraido.dump());
 				bancoAlterado = true;
 				migrar();
@@ -99,14 +99,18 @@ public class RecuperacaoService {
 		catch (RuntimeException exception) {
 			String codigo = exception instanceof RegraNegocioException regra ? regra.getCodigo() : "FALHA_RESTAURACAO";
 			if (bancoAlterado && seguranca != null && Files.isRegularFile(seguranca)) {
-				tentarReverter(seguranca);
+				preservarSeguranca = !tentarReverter(seguranca);
 			}
 			tentarAuditarFalha(manifesto, checksumArquivo, codigo);
+			if (preservarSeguranca) {
+				throw new OperacaoInvalidaException("REVERSAO_INCOMPLETA",
+					"A recuperação e a reversão falharam. Mantenha o sistema parado. A cópia técnica foi preservada na área protegida de backup.");
+			}
 			throw exception;
 		}
 		finally {
 			Arrays.fill(segredo, '\0');
-			ArquivosTemporarios.apagarRecursivamente(trabalho);
+			if (!preservarSeguranca) ArquivosTemporarios.apagarRecursivamente(trabalho);
 			exclusaoMutua.unlock();
 		}
 	}
@@ -163,13 +167,14 @@ public class RecuperacaoService {
 				""");
 	}
 
-	private void tentarReverter(Path seguranca) {
+	private boolean tentarReverter(Path seguranca) {
 		try {
 			postgreSql.restaurar(seguranca);
 			migrar();
+			return true;
 		}
 		catch (RuntimeException ignored) {
-			// O erro original é preservado; a intervenção técnica será necessária se a reversão também falhar.
+			return false;
 		}
 	}
 

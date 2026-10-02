@@ -54,12 +54,16 @@ public class CredencialService {
 	private final Clock clock;
 
 	private final Duration validade;
+	private final com.aclg.apecan.auth.security.LimiteRecuperacaoService limiteRecuperacao;
+	private final org.springframework.transaction.support.TransactionTemplate transacao;
 
 	public CredencialService(UsuarioRepository usuarioRepository, TokenCredencialRepository tokenRepository,
 			HistoricoAdministracaoUsuarioRepository historicoRepository, GeradorTokenSeguro geradorToken,
 			PoliticaSenha politicaSenha, PasswordEncoder passwordEncoder, EntregaRedefinicaoSenha entrega,
 			UsuarioAtual usuarioAtual, SessaoUsuarioService sessaoService, Clock clock,
-			@Value("${apecan.redefinicao.validade:1h}") Duration validade) {
+			@Value("${apecan.redefinicao.validade:1h}") Duration validade,
+			com.aclg.apecan.auth.security.LimiteRecuperacaoService limiteRecuperacao,
+			org.springframework.transaction.PlatformTransactionManager transactionManager) {
 		this.usuarioRepository = usuarioRepository;
 		this.tokenRepository = tokenRepository;
 		this.historicoRepository = historicoRepository;
@@ -71,10 +75,16 @@ public class CredencialService {
 		this.sessaoService = sessaoService;
 		this.clock = clock;
 		this.validade = validade;
+		this.limiteRecuperacao = limiteRecuperacao;
+		this.transacao = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
 	}
 
-	@Transactional
 	public RedefinicaoEmitida solicitar(String email) {
+		if (!limiteRecuperacao.permitir(email)) return new RedefinicaoEmitida(null);
+		return transacao.execute(status -> solicitarPermitido(email));
+	}
+
+	private RedefinicaoEmitida solicitarPermitido(String email) {
 		String normalizado = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
 		Usuario usuario = usuarioRepository.findByEmail(normalizado).orElse(null);
 		if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO || !usuario.estaAtivado()) {

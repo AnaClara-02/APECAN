@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public record PacienteDetalheDto(Long id, String nome, String cpf, LocalDate dataNascimento, String telefone,
 		String endereco, String localTratamento, StatusPaciente status, String criadoPor, String atualizadoPor,
-		LocalDateTime criadoEm, LocalDateTime atualizadoEm) {
+		LocalDateTime criadoEm, LocalDateTime atualizadoEm, LocalDateTime importadoEm) {
 	public boolean podeAlterarStatus() {
 		return status != StatusPaciente.FALECIDO;
 	}

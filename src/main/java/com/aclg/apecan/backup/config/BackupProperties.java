@@ -16,6 +16,18 @@ public class BackupProperties {
 	private DataSize tamanhoDescompactadoMaximo = DataSize.ofGigabytes(10);
 	private Duration timeout = Duration.ofMinutes(30);
 	private int iteracoesPbkdf2 = 600_000;
+	private String sslMode;
+	private String sslRootCert;
+	private String usuario;
+	private String senha;
+	public String getSslMode() { return sslMode; }
+	public void setSslMode(String value) { sslMode = value; }
+	public String getSslRootCert() { return sslRootCert; }
+	public void setSslRootCert(String value) { sslRootCert = value; }
+	public String getUsuario() { return usuario; }
+	public void setUsuario(String value) { usuario = value; }
+	public String getSenha() { return senha; }
+	public void setSenha(String value) { senha = value; }
 
 	public String getPgDumpPath() { return pgDumpPath; }
 	public void setPgDumpPath(String pgDumpPath) { this.pgDumpPath = pgDumpPath; }

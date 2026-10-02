@@ -72,13 +72,15 @@ public class PostgreSqlBackupClient {
 	private void executar(List<String> comando, Duration timeout, String codigo) {
 		ConexaoPostgreSql conexao = conexao();
 		Path erro = null;
+		Process processo = null;
 		try {
 			erro = Files.createTempFile(properties.getDiretorioTemporario(), "postgres-", ".log");
 			ProcessBuilder builder = new ProcessBuilder(comando);
 			builder.environment().put("PGPASSWORD", conexao.senha());
+			configurarTls(builder.environment());
 			builder.redirectError(erro.toFile());
 			builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-			Process processo = builder.start();
+			processo = builder.start();
 			boolean terminou = processo.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
 			if (!terminou) {
 				processo.destroyForcibly();
@@ -98,12 +100,35 @@ public class PostgreSqlBackupClient {
 			throw new OperacaoInvalidaException(codigo, "A operação de backup foi interrompida.");
 		}
 		finally {
+			if (processo != null && processo.isAlive()) {
+				processo.destroyForcibly();
+				try { processo.waitFor(5, TimeUnit.SECONDS); }
+				catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+			}
 			ArquivosTemporarios.apagarSilenciosamente(erro);
 		}
 	}
 
 	private ConexaoPostgreSql conexao() {
-		return ConexaoPostgreSql.de(url, usuario, senha);
+		return ConexaoPostgreSql.de(url,
+			properties.getUsuario() == null ? usuario : properties.getUsuario(),
+			properties.getSenha() == null ? senha : properties.getSenha());
+	}
+
+	void configurarTls(java.util.Map<String, String> ambiente) {
+		java.util.Map<String,String> parametros = new java.util.HashMap<>();
+		String query = URI.create(url.substring("jdbc:".length())).getRawQuery();
+		if (query != null) for (String item : query.split("&")) {
+			String[] par = item.split("=", 2);
+			if (par.length == 2) parametros.put(par[0],
+				java.net.URLDecoder.decode(par[1], java.nio.charset.StandardCharsets.UTF_8));
+		}
+		String modo = properties.getSslMode() != null ? properties.getSslMode() : parametros.get("sslmode");
+		String ca = properties.getSslRootCert() != null ? properties.getSslRootCert() : parametros.get("sslrootcert");
+		if (modo == null && "true".equals(parametros.get("ssl"))) modo = "verify-full";
+		if (modo != null) ambiente.put("PGSSLMODE", modo);
+		if (ca != null) ambiente.put("PGSSLROOTCERT", ca);
+		ambiente.put("PGCONNECT_TIMEOUT", "15");
 	}
 
 	private static final class ConexaoPostgreSql {

@@ -1,6 +1,6 @@
 # Contexto do Projeto APECAN
 
-Documentação técnica e memória de decisões do chat, revisadas em 12/09/2026.
+Documentação técnica e memória de decisões do chat, revisadas em 26/09/2026.
 Este documento descreve o código disponível; planos e relatos de uso não são
 equivalentes a testes de aceitação concluídos. Não contém transcrição integral,
 credenciais, tokens nem dados pessoais do atendimento.
@@ -42,8 +42,8 @@ controller -> service -> repository -> PostgreSQL
 - criacao terminal do primeiro administrador e ativacao por token de uso unico;
 - login por sessao, administracao de usuarios e protecao do ultimo administrador;
 - recuperacao e alteracao de senha, com encerramento de sessoes;
-- entrega local em desenvolvimento e adaptador SMTP em producao;
-- limitacao progressiva em memoria de tentativas de login;
+- entrega local, SMTP e API HTTPS Brevo, selecionáveis por configuração;
+- limitação progressiva persistente de login e limites de recuperação de senha;
 - pacientes, historico de status e inativacao sem exclusao;
 - voluntarios, categorias e unidades individuais de equipamentos;
 - emprestimos com bloqueio pessimista, versao otimista e devolucao auditada;
@@ -59,8 +59,8 @@ controller -> service -> repository -> PostgreSQL
 - exportacoes detalhadas PDF/XLSX com CPF mascarado, proteção contra formulas
   em planilhas e auditoria;
 - modo noturno acessível, com preferência persistida no navegador.
-- backup PostgreSQL completo em arquivo `.apecan-backup`, com manifesto,
-  checksums, AES-256-GCM, auditoria e recuperação restrita ao servidor local.
+- backup operacional em arquivo `.sql`, sem contas de acesso, preservando nomes
+  de autoria e com importação transacional confirmada pelo administrador.
 
 ## Banco e configuracao
 
@@ -75,6 +75,8 @@ O Flyway e o unico responsavel por evoluir o esquema. Nenhuma migracao aplicada 
 - V7: normalizacao dos telefones brasileiros com código do país `55`;
 - V8: historico seguro das exportacoes de relatorios.
 - V9: auditoria de exportacoes de backup e restauracoes locais.
+- V10: controles persistentes de acesso com identificadores HMAC, sem login/e-mail em claro.
+- V11: autoria histórica e exportação/importação SQL de dados operacionais sem contas.
 
 Credenciais locais ficam em `config/application-local.properties`, ignorado pelo Git. O arquivo contem apenas URL, usuario e senha do PostgreSQL tecnico. Senhas, tokens, chaves e dados pessoais reais nunca devem ser adicionados a arquivos versionados.
 
@@ -90,12 +92,10 @@ $env:SPRING_PROFILES_ACTIVE = "local"
 
 Acesse `http://localhost:8080/login`. Testes rapidos usam H2; a verificacao PostgreSQL/Flyway usa Testcontainers quando Docker esta disponivel.
 
-O painel administrativo de backup fica em `/administracao/backups`. Ele exige
-senha atual e uma senha própria para o arquivo. A recuperação de banco vazio é
-exibida apenas em acesso loopback; com usuários existentes, utiliza o perfil
-`recovery` em `127.0.0.1:8090`, iniciado pelo script local documentado no
-README. A restauração aceita backups de esquema igual ou anterior, aplica
-migrações pendentes, encerra sessões e invalida tokens antigos.
+O menu **Backup** possui Exportação e Importação. A exportação gera SQL legível
+com dados operacionais, sem usuários e credenciais. A importação compara arquivo
+e banco atual, exige nova confirmação da senha e substitui apenas os dados
+operacionais em uma transação. As contas da instalação permanecem intactas.
 
 Para criar o primeiro administrador em banco vazio:
 
@@ -117,7 +117,8 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 - registros de negocio sao inativados; a excecao aprovada e excluir categorias sem unidades vinculadas;
 - CPFs sao persistidos com 11 numeros;
 - dados reais somente podem ser usados em infraestrutura de producao aprovada;
-- ambientes gratuitos e demonstrações recebem apenas dados ficticios ou anonimizados;
+- homologação e demonstrações recebem apenas dados fictícios ou anonimizados;
+- o uso real pretendido em hospedagem gratuita não está aprovado só pela implementação;
 - segredos nunca sao versionados.
 
 ## Proximos passos
@@ -126,11 +127,11 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 - instalar Docker localmente para executar a validacao PostgreSQL/Testcontainers;
 - realizar teste de usabilidade com dados totalmente ficticios;
 - revisar com a APECAN a obrigatoriedade da nota fiscal e os relatorios;
-- configurar SMTP, HTTPS e infraestrutura privada, e testar periodicamente a
+- homologar Brevo, HTTPS e infraestrutura protegida, e testar periodicamente a
   restauracao dos backups antes
   de inserir dados reais;
-- persistir sessoes HTTP e tentativas de login antes de escalar o backend para
-  mais de uma instancia;
+- persistir sessões HTTP e revisar sua invalidação antes de escalar o backend para
+  mais de uma instância; tentativas de login já são persistentes;
 - criar armazenamento protegido para fotos antes de habilitar uploads;
 - preparar implantacao e observabilidade sem registrar dados pessoais.
 
@@ -144,7 +145,7 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 | `src/main/java/com/aclg/apecan/` | Módulos funcionais e infraestrutura compartilhada. |
 | `src/main/resources/templates/` | Páginas Thymeleaf, formulários e fragments reutilizados. |
 | `src/main/resources/static/` | CSS, JavaScript, imagens e fontes da interface. |
-| `src/main/resources/db/migration/` | Migrações imutáveis V1–V9. |
+| `src/main/resources/db/migration/` | Migrações imutáveis V1–V11. |
 | `src/main/resources/application*.properties` | Configurações compartilhadas e perfis, sem credenciais reais. |
 | `src/main/resources/META-INF/` | Metadados das propriedades próprias, usados pelo editor; não são segredos. |
 | `config/application-local.properties` | Configuração privada externa ao JAR, ignorada no Git. |
@@ -185,12 +186,12 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 9. O usuário informou que haverá dados reais. A recomendação registrada é não
    usar ambientes gratuitos de demonstração para esses dados. A implantação
    exige avaliação operacional, acesso restrito, HTTPS e restauração testada.
-10. Backup foi definido como arquivo completo criptografado, não CSV. Relatórios
-    são exportações para consulta, não substitutos da recuperação do sistema.
-11. O usuário relatou sucesso no download do backup, mas isso não demonstra um
-    ciclo completo de restauração. Criar/ativar um administrador em um banco novo
-    deixa esse banco fora da condição de instalação sem usuários; nesse caso,
-    a restauração requer o modo local de recuperação.
+10. Backup operacional foi definido como SQL controlado. Ele não transporta
+    contas, senhas ou permissões; preserva o nome e a data do autor histórico.
+    Relatórios continuam sendo exportações de consulta, não backups.
+11. A importação é feita por um administrador já criado na instalação de destino.
+    Ela compara arquivo e dados atuais, pede confirmação e substitui somente as
+    tabelas operacionais, preservando as contas locais.
 12. O documento acadêmico foi revisado usando a versão mais recente fornecida em
     ZIP como base, conforme escolha explícita do usuário. Foram alinhados
     tecnologias, RF01–RF16, diagrama e alegações de resultados. PDF e LaTeX
@@ -204,18 +205,11 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
   configuração externa ao executá-lo com `java -jar` a partir da raiz.
 - A entrega `local` de links não envia e-mail. SMTP exige o adaptador `email`,
   servidor e credenciais válidos, guardados fora dos arquivos públicos.
-- Falha ao executar `pg_dump`/`pg_restore`: conferir instalação, caminhos
-  explícitos e compatibilidade dos clientes com o servidor PostgreSQL.
-- O arquivo `.apecan-backup` é baixado para o local escolhido pelo navegador,
-  normalmente Downloads. Copiar para outro dispositivo e guardar a senha fora
-  do arquivo; não versionar o backup, ainda que criptografado.
-- A restauração substitui dados; não mescla cadastros. Usar banco separado para
-  testes e conferir o destino antes de iniciar. Não inicializar o administrador
-  antes de testar o caminho de instalação vazia. Nunca apagar o banco original
-  para preparar um teste.
-- Com usuários existentes, parar a execução normal antes do script recovery.
-  No desenvolvimento, `-ServiceName ""` não encerra uma aplicação iniciada por
-  Maven: ela deve ser parada manualmente. Os parâmetros estão no README.
+- O arquivo `.sql` é baixado para o local escolhido pelo navegador, normalmente
+  Downloads. Copiar para outro dispositivo protegido; não versionar, pois contém
+  dados pessoais legíveis e não possui criptografia própria.
+- A importação substitui dados operacionais; não mescla cadastros. A interface
+  mostra a comparação antes da confirmação e mantém os usuários da instalação.
 - Não publicar `application-local.*`, `application-secrets.*`, `.env`, backups,
   dumps, logs, certificados, chaves privadas ou arquivos com dados reais.
 
@@ -224,22 +218,21 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 O código implementa criptografia, checksums, auditoria e restauração transacional
 com ferramentas PostgreSQL. Isso não significa certificação de recuperação em
 todas as falhas. Os testes atuais de backup abrangem criptografia, acesso ao
-controller e disponibilidade local. O teste PostgreSQL verifica migrações e
-objetos do esquema, mas não executa o ciclo real completo de dump e restore.
+controller e disponibilidade local. O teste PostgreSQL agora também implementa
+dump, criptografia e restore em outro banco descartável, dependendo de Docker.
 
 Antes do uso operacional, priorizar:
 
 - teste integral de exportar/restaurar em PostgreSQL separado, incluindo IDs,
   relacionamentos, autenticação, tokens invalidados e migrações;
 - testes de interrupção, falta de espaço e falha de reversão;
-- revisão da retenção da cópia técnica: atualmente o fluxo apaga temporários no
-  `finally`, inclusive após tentativa de reversão que falhe; não contar com essa
-  cópia como recuperação durável contra pane;
+- a cópia técnica passou a ser preservada se a reversão falhar; continua sem ser
+  uma cópia externa durável contra pane, e requer proteção e limpeza operacional;
 - revisão dos limites de upload, permissões dos temporários e exclusão mútua;
 - instalador e serviço Windows: existe script de recuperação, não um instalador
   `APECAN-Recovery.exe` entregue;
-- validar transporte protegido ao usar banco remoto: o cliente de backup atual
-  extrai host/porta/banco da URL JDBC, sem transportar suas opções TLS.
+- homologar o transporte remoto: o cliente agora repassa opções TLS e o perfil
+  Render exige verificação de certificado/hostname com CA explícita.
 
 ## Verificação desta entrega
 
@@ -251,6 +244,34 @@ a validação específica no JDK 25 permanece a cargo da CI configurada.
 Não foi realizada restauração nem alteração do banco operacional nesta entrega.
 
 ## Como continuar em outro chat
+
+### Incremento Render, Neon e Brevo — 26/09/2026
+
+- Docker multi-stage Java 25, execução não root e clientes PostgreSQL 18.
+- Blueprint Render Free na Virgínia, deploy manual e health check de liveness.
+- Neon escolhido em São Paulo e inicialmente vazio; nenhuma transferência do banco local.
+- Perfil `prod,render` com pool pequeno, Brevo HTTPS e recuperação pública bloqueada.
+- Segredos de banco, Flyway, backup e API separados da imagem e do repositório.
+- Interface compartilhada de e-mail; envio após commit e mensagens coerentes com falha/aceitação.
+- V10 persiste bloqueios e limites de recuperação com identificadores HMAC.
+- Bootstrap local suporta reemissão inicial somente para a única conta administradora pendente.
+- Backup SQL usa formato controlado, valores parametrizados na importação e transação única.
+- Sessões continuam em memória; reinícios exigem login. Não há fila durável de e-mails.
+- O uso real é pretendido, mas depende de homologação, privacidade, recuperação e disponibilidade;
+  não foi certificado como pronto para produção.
+
+Procedimento completo e pré-requisitos: [Hospedagem Render/Neon/Brevo](HOSPEDAGEM_RENDER_NEON_BREVO.md).
+
+Verificação desta etapa: `verify` gerou o JAR e contabilizou 67 testes,
+66 aprovados e 1 ignorado por ausência de Docker, sem falhas ou erros.
+Uma instância PostgreSQL 18.3 independente e descartável também validou V1–V11,
+Hibernate `validate` e dump/restore para outro banco. Ela foi encerrada após o teste.
+JDK local 26 com alvo 25; execução em Java 25 e build da imagem ficam para a CI.
+Permanecem pendentes o ensaio Docker de 512 MB, conexão Neon TLS real, entrega Brevo
+e homologação completa dos fluxos operacionais na hospedagem. Não foram usados
+dados reais, acessadas contas externas ou realizados commit/push/deploy.
+
+### Orientações de continuidade
 
 Ler este arquivo e o README; conferir `git status`, histórico e código antes de
 alterar. Não tomar planos antigos como funcionalidades comprovadas. Preservar

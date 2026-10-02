@@ -12,6 +12,8 @@ public class RecuperacaoDisponibilidadeService {
 
 	private final UsuarioRepository usuarioRepository;
 	private final boolean modoRecuperacao;
+	@org.springframework.beans.factory.annotation.Autowired
+	private org.springframework.core.env.Environment environment;
 
 	public RecuperacaoDisponibilidadeService(UsuarioRepository usuarioRepository,
 			@Value("${apecan.recovery.enabled:false}") boolean modoRecuperacao) {
@@ -20,6 +22,9 @@ public class RecuperacaoDisponibilidadeService {
 	}
 
 	public boolean permitida(HttpServletRequest request) {
+		if (environment != null && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("render"))) {
+			return false;
+		}
 		return requisicaoLocal(request) && (modoRecuperacao || usuarioRepository.count() == 0);
 	}
 

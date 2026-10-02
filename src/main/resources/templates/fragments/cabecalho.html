@@ -46,8 +46,14 @@
                 <a class="item-menu" th:href="@{/usuarios}" th:classappend="${#strings.startsWith(caminhoAtual, '/usuarios')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/usuarios')} ? 'page' : null">
                     <svg aria-hidden="true"><use th:href="@{/images/icons.svg#usuarios}"></use></svg><span>Usuários</span>
                 </a>
-                <a class="item-menu" th:href="@{/administracao/backups}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups')} ? 'page' : null">
-                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Backup</span>
+            </th:block>
+            <th:block th:if="${usuarioLogado != null and usuarioLogado.administrador()}">
+                <p class="grupo-menu">Backup</p>
+                <a class="item-menu" th:href="@{/administracao/backups/exportacao}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? 'page' : null">
+                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Exportação</span>
+                </a>
+                <a class="item-menu" th:href="@{/administracao/backups/importacao}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups/importacao')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups/importacao')} ? 'page' : null">
+                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Importação</span>
                 </a>
             </th:block>
         </nav>

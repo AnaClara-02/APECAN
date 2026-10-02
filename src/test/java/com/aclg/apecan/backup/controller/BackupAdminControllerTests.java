@@ -1,7 +1,7 @@
 package com.aclg.apecan.backup.controller;
 
 import com.aclg.apecan.backup.service.BackupArquivo;
-import com.aclg.apecan.backup.service.BackupService;
+import com.aclg.apecan.backup.service.BackupSqlService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,23 +26,21 @@ class BackupAdminControllerTests {
 
 	@Test
 	void deveTransmitirArquivoGeradoELimparTemporario() throws Exception {
-		BackupService backupService = mock(BackupService.class);
-		Path arquivo = diretorioTemporario.resolve("backup.apecan-backup");
-		byte[] conteudo = "backup-criptografado".getBytes(StandardCharsets.UTF_8);
+		BackupSqlService backupService = mock(BackupSqlService.class);
+		Path arquivo = diretorioTemporario.resolve("backup.sql");
+		byte[] conteudo = "-- APECAN-SQL-BACKUP:1".getBytes(StandardCharsets.UTF_8);
 		Files.write(arquivo, conteudo);
-		BackupArquivo backup = new BackupArquivo(arquivo, "apecan-backup-teste.apecan-backup", "checksum");
-		when(backupService.exportar("senha-atual", "senha-de-backup-segura"))
+		BackupArquivo backup = new BackupArquivo(arquivo, "apecan-dados-teste.sql", "checksum");
+		when(backupService.exportar("senha-atual"))
 			.thenReturn(backup);
 		MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new BackupAdminController(backupService)).build();
 
-		mockMvc.perform(post("/administracao/backups/exportar")
-				.param("senhaAtual", "senha-atual")
-				.param("senhaBackup", "senha-de-backup-segura")
-				.param("confirmacaoSenhaBackup", "senha-de-backup-segura"))
+		mockMvc.perform(post("/administracao/backups/exportacao")
+				.param("senhaAtual", "senha-atual"))
 			.andExpect(status().isOk())
 			.andExpect(header().string("Cache-Control", "no-store"))
 			.andExpect(header().string("Content-Disposition",
-				"attachment; filename=\"apecan-backup-teste.apecan-backup\""))
+				"attachment; filename=\"apecan-dados-teste.sql\""))
 			.andExpect(content().bytes(conteudo));
 
 		verify(backupService).limpar(backup);

@@ -38,10 +38,16 @@ public class HistoricoStatusPaciente {
     @Column(name = "alterado_em", nullable = false, updatable = false)
     private LocalDateTime alteradoEm;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "alterado_por_usuario_id", nullable = false,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alterado_por_usuario_id",
         foreignKey = @ForeignKey(name = "fk_historico_status_usuario"))
     private Usuario alteradoPor;
+
+    @Column(name = "alterado_por_nome_historico", length = 150, insertable = false, updatable = false)
+    private String alteradoPorNomeHistorico;
+
+    @Column(name = "importado_em", insertable = false, updatable = false)
+    private LocalDateTime importadoEm;
 
     @Column(length = 255)
     private String observacao;
@@ -64,5 +70,6 @@ public class HistoricoStatusPaciente {
     public StatusPaciente getStatus() { return status; }
     public LocalDateTime getAlteradoEm() { return alteradoEm; }
     public Usuario getAlteradoPor() { return alteradoPor; }
+    public String getNomeResponsavel() { return alteradoPor != null ? alteradoPor.getNome() : alteradoPorNomeHistorico; }
     public String getObservacao() { return observacao; }
 }

@@ -16,8 +16,9 @@
     <div class="alerta alerta-aviso" th:if="${ativacao.linkLocal != null}">
         Copie e entregue este link somente ao titular da conta. Ele não será mostrado novamente.
     </div>
-    <div class="alerta alerta-sucesso" th:if="${ativacao.linkLocal == null}">
-        As instruções de ativação foram enviadas ao e-mail cadastrado.
+    <div class="alerta alerta-aviso" role="status" th:if="${ativacao.linkLocal == null}"
+         th:text="${ativacao.mensagem}">
+        Consulte o resultado do envio.
     </div>
     <label for="linkAtivacao" th:if="${ativacao.linkLocal != null}">Link de ativação</label>
     <textarea id="linkAtivacao" class="campo-link" readonly

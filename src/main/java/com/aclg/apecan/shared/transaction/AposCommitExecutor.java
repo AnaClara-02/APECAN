@@ -12,12 +12,17 @@ public class AposCommitExecutor {
 	private static final Logger LOG = LoggerFactory.getLogger(AposCommitExecutor.class);
 
 	public void executar(Runnable tarefa, String descricaoSegura) {
+		executar(tarefa, descricaoSegura, () -> {});
+	}
+
+	public void executar(Runnable tarefa, String descricaoSegura, Runnable aoFalhar) {
 		Runnable protegida = () -> {
 			try {
 				tarefa.run();
 			}
 			catch (RuntimeException exception) {
-				LOG.error("Falha ao executar tarefa apos commit: {}", descricaoSegura, exception);
+				LOG.error("Falha ao executar tarefa apos commit: {}", descricaoSegura);
+				aoFalhar.run();
 			}
 		};
 		if (!TransactionSynchronizationManager.isSynchronizationActive()) {

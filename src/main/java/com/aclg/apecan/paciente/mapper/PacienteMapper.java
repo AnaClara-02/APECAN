@@ -22,9 +22,8 @@ public class PacienteMapper {
 	public PacienteDetalheDto paraDetalhe(Paciente paciente) {
 		return new PacienteDetalheDto(paciente.getId(), paciente.getNome(), CpfFormatter.formatar(paciente.getCpf()),
 				paciente.getDataNascimento(), TelefoneFormatter.formatar(paciente.getTelefone()), paciente.getEndereco(),
-				paciente.getLocalTratamento(), paciente.getStatus(), paciente.getCriadoPor().getNome(),
-				paciente.getAtualizadoPor() == null ? null : paciente.getAtualizadoPor().getNome(),
-				paciente.getCriadoEm(), paciente.getAtualizadoEm());
+				paciente.getLocalTratamento(), paciente.getStatus(), paciente.getNomeCriador(),
+				paciente.getNomeAtualizador(), paciente.getCriadoEm(), paciente.getAtualizadoEm(), paciente.getImportadoEm());
 	}
 
 	public EditarPacienteForm paraFormulario(Paciente paciente) {
@@ -39,7 +38,7 @@ public class PacienteMapper {
 
 	public HistoricoStatusPacienteDto paraHistorico(HistoricoStatusPaciente historico) {
 		return new HistoricoStatusPacienteDto(historico.getStatus(), historico.getAlteradoEm(),
-				historico.getAlteradoPor().getNome(), historico.getObservacao());
+				historico.getNomeResponsavel(), historico.getObservacao());
 	}
 
 }

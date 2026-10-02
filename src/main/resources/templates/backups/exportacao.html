@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Exportação de backup | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina"><div><p class="rotulo">Backup</p><h1>Exportação</h1>
+        <p class="texto-secundario">Gere um SQL com os dados operacionais para recuperação futura.</p></div></section>
+    <div class="alerta alerta-aviso" role="note">O SQL contém dados pessoais legíveis. Ele não inclui contas, senhas,
+        tokens nem permissões. Guarde-o em mídia protegida e fora do computador do sistema.</div>
+    <section class="cartao">
+        <h2>Gerar arquivo SQL</h2>
+        <p class="texto-secundario">Pacientes, voluntários, equipamentos, empréstimos, doações e dados financeiros serão incluídos. Os nomes dos autores serão preservados como histórico.</p>
+        <form class="formulario" th:action="@{/administracao/backups/exportacao}" th:object="${exportarBackupSqlForm}" method="post">
+            <div class="alerta alerta-erro" role="alert" th:if="${#fields.hasGlobalErrors()}" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
+            <label for="senhaAtual">Confirme sua senha atual</label>
+            <input id="senhaAtual" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
+            <small class="erro-campo" th:errors="*{senhaAtual}"></small>
+            <button class="botao botao-primario" type="submit">Gerar e baixar SQL</button>
+        </form>
+    </section>
+</main></body></html>

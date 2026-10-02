@@ -1,83 +1,48 @@
 package com.aclg.apecan.auth.security;
-
+import java.time.Clock;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Service
 public class TentativasLoginService {
-
-	private final ConcurrentHashMap<String, Tentativa> tentativas = new ConcurrentHashMap<>();
-
-	private final Clock clock;
-
-	private final int limite;
-
-	private final Duration janela;
-
-	private final Duration bloqueioInicial;
-
-	private final Duration bloqueioMaximo;
-
-	public TentativasLoginService(Clock clock, @Value("${apecan.login.limite-tentativas:5}") int limite,
-			@Value("${apecan.login.janela:15m}") Duration janela,
-			@Value("${apecan.login.bloqueio-inicial:1m}") Duration bloqueioInicial,
-			@Value("${apecan.login.bloqueio-maximo:15m}") Duration bloqueioMaximo) {
-		this.clock = clock;
-		this.limite = limite;
-		this.janela = janela;
-		this.bloqueioInicial = bloqueioInicial;
-		this.bloqueioMaximo = bloqueioMaximo;
-	}
-
-	public void verificar(String login) {
-		String chave = normalizar(login);
-		Tentativa tentativa = tentativas.get(chave);
-		if (tentativa == null)
-			return;
-		Instant agora = clock.instant();
-		if (tentativa.inicioJanela().plus(janela).isBefore(agora)) {
-			tentativas.remove(chave, tentativa);
-		}
-		else if (tentativa.bloqueadoAte() != null && tentativa.bloqueadoAte().isAfter(agora)) {
-			throw new LockedException("Usuário ou senha inválidos.");
-		}
-	}
-
-	public void registrarFalha(String login) {
-		String chave = normalizar(login);
-		Instant agora = clock.instant();
-		tentativas.compute(chave, (ignorada, anterior) -> {
-			boolean novaJanela = anterior == null || anterior.inicioJanela().plus(janela).isBefore(agora);
-			int falhas = novaJanela ? 1 : anterior.falhas() + 1;
-			Instant inicio = novaJanela ? agora : anterior.inicioJanela();
-			Instant bloqueadoAte = null;
-			if (falhas >= limite) {
-				long multiplicador = 1L << Math.min(falhas - limite, 8);
-				Duration bloqueio = bloqueioInicial.multipliedBy(multiplicador);
-				if (bloqueio.compareTo(bloqueioMaximo) > 0)
-					bloqueio = bloqueioMaximo;
-				bloqueadoAte = agora.plus(bloqueio);
-			}
-			return new Tentativa(falhas, inicio, bloqueadoAte);
-		});
-	}
-
-	public void registrarSucesso(String login) {
-		tentativas.remove(normalizar(login));
-	}
-
-	private String normalizar(String login) {
-		return login == null ? "" : login.trim().toLowerCase(Locale.ROOT);
-	}
-
-	private record Tentativa(int falhas, Instant inicioJanela, Instant bloqueadoAte) {
-	}
-
+    private final ControleAcessoStore store;
+    private final Clock clock;
+    private final int limite;
+    private final Duration janela, bloqueioInicial, bloqueioMaximo;
+    public TentativasLoginService(ControleAcessoStore store, Clock clock,
+            @Value("${apecan.login.limite-tentativas:5}") int limite,
+            @Value("${apecan.login.janela:15m}") Duration janela,
+            @Value("${apecan.login.bloqueio-inicial:1m}") Duration bloqueioInicial,
+            @Value("${apecan.login.bloqueio-maximo:15m}") Duration bloqueioMaximo) {
+        this.store=store; this.clock=clock; this.limite=limite; this.janela=janela;
+        this.bloqueioInicial=bloqueioInicial; this.bloqueioMaximo=bloqueioMaximo;
+    }
+    public void verificar(String login) {
+        boolean bloqueado = store.alterar("LOGIN", login, estado -> estado.bloqueadoAte > clock.millis());
+        if (bloqueado) throw new LockedException("Usuário ou senha inválidos.");
+    }
+    public void registrarFalha(String login) {
+        store.alterar("LOGIN", login, estado -> {
+            long agora=clock.millis();
+            if (estado.falhas == 0 || agora >= estado.inicio + janela.toMillis()) {
+                estado.falhas=0; estado.inicio=agora; estado.bloqueadoAte=0;
+            }
+            estado.falhas=Math.min(estado.falhas + 1, limite + 8);
+            if (estado.falhas >= limite) {
+                long tempo=Math.min(bloqueioInicial.toMillis() * (1L << Math.min(estado.falhas-limite, 8)),
+                        bloqueioMaximo.toMillis());
+                estado.bloqueadoAte=agora+tempo;
+            }
+            estado.ultimo=agora;
+            estado.expira=Math.max(estado.inicio + janela.toMillis(), estado.bloqueadoAte);
+            return null;
+        });
+    }
+    public void registrarSucesso(String login) {
+        store.alterar("LOGIN", login, estado -> {
+            estado.falhas=0; estado.bloqueadoAte=0; estado.expira=clock.millis(); return null;
+        });
+    }
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirmar importação | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo">
+    <section class="cabecalho-pagina"><div><p class="rotulo">Backup</p><h1>Confirmar importação</h1>
+        <p class="texto-secundario">Compare o arquivo selecionado com os dados atualmente armazenados.</p></div></section>
+    <div class="alerta alerta-aviso alerta-centralizado" role="alert" th:if="${preparacao.dadosAtuais.possuiDados()}">
+        Já existem dados no sistema. Se continuar, todos os dados operacionais atuais serão substituídos pelos dados do arquivo.</div>
+    <section class="grade-cartoes comparacao-backup">
+        <article class="cartao dados"><p class="rotulo">Arquivo selecionado</p><h2>Dados que serão importados</h2><dl>
+            <dt>Nome</dt><dd th:text="${preparacao.arquivo.nome}">backup.sql</dd>
+            <dt>Data</dt><dd th:text="${#temporals.format(preparacao.arquivo.exportadoEm, 'dd/MM/yyyy HH:mm')}">Data</dd>
+            <dt>Tamanho</dt><dd th:text="${preparacao.arquivo.tamanhoFormatado()}">0 KB</dd>
+            <dt>Registros</dt><dd th:text="${preparacao.arquivo.quantidadeRegistros}">0</dd>
+        </dl></article>
+        <article class="cartao dados"><p class="rotulo">Sistema atual</p><h2>Dados presentes nas tabelas</h2><dl>
+            <dt>Última alteração</dt><dd th:text="${preparacao.dadosAtuais.ultimaAlteracao == null ? 'Sem registros' : #temporals.format(preparacao.dadosAtuais.ultimaAlteracao, 'dd/MM/yyyy HH:mm')}">Data</dd>
+            <dt>Tamanho estimado</dt><dd th:text="${preparacao.dadosAtuais.tamanhoFormatado()}">0 KB</dd>
+            <dt>Registros</dt><dd th:text="${preparacao.dadosAtuais.quantidadeRegistros}">0</dd>
+        </dl></article>
+    </section>
+    <section class="cartao secao">
+        <h2 th:text="${preparacao.dadosAtuais.possuiDados() ? 'Deseja substituir os dados atuais?' : 'Deseja importar estes dados?'}">Confirmar</h2>
+        <form class="formulario" th:action="@{/administracao/backups/importacao/confirmar}" th:object="${confirmarImportacaoSqlForm}" method="post">
+            <input type="hidden" th:field="*{token}">
+            <div class="alerta alerta-erro" role="alert" th:if="${#fields.hasGlobalErrors()}" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}"></div>
+            <label for="senhaAtual">Confirme sua senha atual</label><input id="senhaAtual" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
+            <small class="erro-campo" th:errors="*{senhaAtual}"></small>
+            <label class="confirmacao-destrutiva"><input type="checkbox" required> Entendo que esta operação substitui os dados operacionais e não pode ser desfeita pela tela.</label>
+            <button class="botao botao-perigo" type="submit">Importar e substituir dados</button>
+        </form>
+        <form class="acoes" th:action="@{/administracao/backups/importacao/cancelar}" method="post">
+            <input type="hidden" name="token" th:value="${preparacao.token}">
+            <button class="botao botao-secundario" type="submit">Manter os dados atuais</button>
+        </form>
+    </section>
+</main></body></html>

@@ -32,6 +32,12 @@ public class BootstrapAdministradorRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         int codigoSaida = 0;
         try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
+            if (args.containsOption("reenviar-ativacao-inicial")) {
+                var ativacao = usuarioService.reemitirPrimeiraAtivacao();
+                System.out.println(ativacao.mensagem());
+                if (ativacao.linkLocal() != null) System.out.println(ativacao.linkLocal());
+                return;
+            }
             System.out.println();
             System.out.println("=== Configuracao inicial do APECAN ===");
             System.out.println("Informe os dados do primeiro administrador.");
@@ -48,8 +54,12 @@ public class BootstrapAdministradorRunner implements ApplicationRunner {
 
             System.out.println();
             System.out.println("Administrador pendente criado com sucesso.");
-            System.out.println("Entregue o link abaixo ao administrador. Ele e exibido uma unica vez:");
-            System.out.println(resultado.ativacao().linkLocal());
+            if (resultado.ativacao().linkLocal() != null) {
+                System.out.println("Entregue o link abaixo ao administrador. Ele e exibido uma unica vez:");
+                System.out.println(resultado.ativacao().linkLocal());
+            } else {
+                System.out.println(resultado.ativacao().mensagem());
+            }
             System.out.println("Valido ate: " + resultado.ativacao().expiraEm());
         } catch (ConstraintViolationException exception) {
             codigoSaida = 1;
