@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
+@org.springframework.validation.annotation.Validated
 public class VoluntarioService {
 
 	private final VoluntarioRepository repository;

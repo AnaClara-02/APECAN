@@ -15,6 +15,7 @@ import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
+@org.springframework.validation.annotation.Validated
 public class EquipamentoService {
 
 	private final EquipamentoRepository equipamentos;

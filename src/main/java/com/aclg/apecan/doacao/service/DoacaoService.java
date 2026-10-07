@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Service
+@org.springframework.validation.annotation.Validated
 public class DoacaoService {
 
 	private final DoacaoRepository doacoes;

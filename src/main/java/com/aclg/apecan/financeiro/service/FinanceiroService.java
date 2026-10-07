@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
+@org.springframework.validation.annotation.Validated
 public class FinanceiroService {
 
 	private final MovimentacaoFinanceiraRepository movimentos;

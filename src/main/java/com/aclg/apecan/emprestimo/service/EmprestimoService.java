@@ -20,6 +20,7 @@ import java.time.*;
 import java.util.*;
 
 @Service
+@org.springframework.validation.annotation.Validated
 public class EmprestimoService {
 
 	private final EmprestimoEquipamentoRepository emprestimos;

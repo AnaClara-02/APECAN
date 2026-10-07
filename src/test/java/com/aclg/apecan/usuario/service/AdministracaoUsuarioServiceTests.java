@@ -75,7 +75,8 @@ class AdministracaoUsuarioServiceTests {
         );
 
         SessionInformation sessao = sessionRegistry.getSessionInformation("sessao-admin-inicial");
-        assertThat(sessao.isExpired()).isTrue();
+        // A transação do teste ainda está aberta; a revogação só ocorre após commit.
+        assertThat(sessao.isExpired()).isFalse();
         assertThat(adminInicial.getTipoPerfil()).isEqualTo(TipoPerfil.USUARIO);
 
         autenticar(segundo);

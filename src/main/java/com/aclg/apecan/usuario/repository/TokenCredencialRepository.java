@@ -11,6 +11,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TokenCredencialRepository extends JpaRepository<TokenCredencial, Long> {
+    List<TokenCredencial> findAllByUsuarioAndUtilizadoEmIsNull(Usuario usuario);
+
+    @org.springframework.data.jpa.repository.Query("select t.usuario.id from TokenCredencial t where t.tokenHash = :hash and t.finalidade = :finalidade")
+    Optional<Long> findUsuarioId(@org.springframework.data.repository.query.Param("hash") String hash,
+        @org.springframework.data.repository.query.Param("finalidade") FinalidadeTokenCredencial finalidade);
+
 
     Optional<TokenCredencial> findByTokenHashAndFinalidade(
         String tokenHash,

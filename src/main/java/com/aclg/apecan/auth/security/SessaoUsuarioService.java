@@ -14,6 +14,15 @@ public class SessaoUsuarioService {
     }
 
     public void encerrarSessoes(Long usuarioId) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() { expirarSessoes(usuarioId); }
+                });
+        } else expirarSessoes(usuarioId);
+    }
+
+    private void expirarSessoes(Long usuarioId) {
         sessionRegistry.getAllPrincipals().stream()
             .filter(UsuarioPrincipal.class::isInstance)
             .map(UsuarioPrincipal.class::cast)

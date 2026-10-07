@@ -2,8 +2,10 @@ package com.aclg.apecan.usuario.service;
 
 import com.aclg.apecan.auth.security.SessaoUsuarioService;
 import com.aclg.apecan.auth.security.UsuarioAtual;
+import com.aclg.apecan.auth.security.ReautenticacaoService;
 import com.aclg.apecan.auth.service.AtivacaoEmitida;
 import com.aclg.apecan.auth.service.AtivacaoUsuarioService;
+import com.aclg.apecan.auth.service.RevogacaoTokensService;
 import com.aclg.apecan.shared.exception.ConflitoNegocioException;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.shared.exception.RecursoNaoEncontradoException;
@@ -25,7 +27,6 @@ import com.aclg.apecan.usuario.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,9 +46,10 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final HistoricoAdministracaoUsuarioRepository historicoRepository;
     private final AtivacaoUsuarioService ativacaoService;
+    private final RevogacaoTokensService revogacaoTokens;
     private final UsuarioMapper usuarioMapper;
     private final UsuarioAtual usuarioAtual;
-    private final PasswordEncoder passwordEncoder;
+    private final ReautenticacaoService reautenticacao;
     private final SessaoUsuarioService sessaoUsuarioService;
     private final Clock clock;
 
@@ -55,17 +57,19 @@ public class UsuarioService {
             UsuarioRepository usuarioRepository,
             HistoricoAdministracaoUsuarioRepository historicoRepository,
             AtivacaoUsuarioService ativacaoService,
+            RevogacaoTokensService revogacaoTokens,
             UsuarioMapper usuarioMapper,
             UsuarioAtual usuarioAtual,
-            PasswordEncoder passwordEncoder,
+            ReautenticacaoService reautenticacao,
             SessaoUsuarioService sessaoUsuarioService,
             Clock clock) {
         this.usuarioRepository = usuarioRepository;
         this.historicoRepository = historicoRepository;
         this.ativacaoService = ativacaoService;
+        this.revogacaoTokens = revogacaoTokens;
         this.usuarioMapper = usuarioMapper;
         this.usuarioAtual = usuarioAtual;
-        this.passwordEncoder = passwordEncoder;
+        this.reautenticacao = reautenticacao;
         this.sessaoUsuarioService = sessaoUsuarioService;
         this.clock = clock;
     }
@@ -146,6 +150,10 @@ public class UsuarioService {
         validarDuplicidadesEdicao(usuario.getId(), login, email);
 
         boolean loginAlterado = !usuario.getLogin().equals(login);
+        boolean emailAlterado = !usuario.getEmail().equals(email);
+        if (emailAlterado) {
+            revogacaoTokens.revogarPendentes(usuario);
+        }
         usuario.atualizarDadosPessoais(
             normalizarTexto(formulario.getNome()),
             login,
@@ -258,6 +266,7 @@ public class UsuarioService {
         }
 
         alvo.desativar(LocalDateTime.now(clock));
+        revogacaoTokens.revogarPendentes(alvo);
         registrar(
             alvo,
             contexto.responsavel(),
@@ -284,6 +293,8 @@ public class UsuarioService {
         }
 
         alvo.reativar();
+        // Inclui contas desativadas por versões anteriores, que não revogavam links.
+        revogacaoTokens.revogarPendentes(alvo);
         registrar(
             alvo,
             contexto.responsavel(),
@@ -380,13 +391,7 @@ public class UsuarioService {
     }
 
     private void validarSenhaAtual(Usuario responsavel, String senhaAtual) {
-        if (responsavel.getSenhaHash() == null
-                || !passwordEncoder.matches(senhaAtual, responsavel.getSenhaHash())) {
-            throw new OperacaoInvalidaException(
-                "SENHA_ATUAL_INVALIDA",
-                "A senha atual informada e invalida."
-            );
-        }
+        reautenticacao.validar(responsavel, senhaAtual);
     }
 
     private void impedirRemocaoUltimoAdministrador(

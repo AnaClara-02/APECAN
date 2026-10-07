@@ -1,6 +1,7 @@
 package com.aclg.apecan.backup.service;
 
 import com.aclg.apecan.auth.security.UsuarioAtual;
+import com.aclg.apecan.auth.security.ReautenticacaoService;
 import com.aclg.apecan.backup.config.BackupProperties;
 import com.aclg.apecan.backup.entity.ResultadoBackup;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
@@ -8,7 +9,6 @@ import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
 import jakarta.annotation.PreDestroy;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -47,10 +47,11 @@ public class BackupSqlService {
 
 	private final JdbcTemplate jdbc;
 	private final TransactionTemplate transacao;
+	private final TransactionTemplate leitura;
 	private final BackupProperties properties;
 	private final UsuarioAtual usuarioAtual;
 	private final UsuarioRepository usuarios;
-	private final PasswordEncoder passwordEncoder;
+    private final ReautenticacaoService reautenticacao;
 	private final ChecksumService checksum;
 	private final VersoesBackupService versoes;
 	private final BackupAuditoriaService auditoria;
@@ -60,14 +61,19 @@ public class BackupSqlService {
 
 	public BackupSqlService(JdbcTemplate jdbc, PlatformTransactionManager transactionManager,
 			BackupProperties properties, UsuarioAtual usuarioAtual, UsuarioRepository usuarios,
-			PasswordEncoder passwordEncoder, ChecksumService checksum, VersoesBackupService versoes,
+			ReautenticacaoService reautenticacao, ChecksumService checksum, VersoesBackupService versoes,
 			BackupAuditoriaService auditoria, Clock clock) {
 		this.jdbc = jdbc;
 		this.transacao = new TransactionTemplate(transactionManager);
+		this.leitura = new TransactionTemplate(transactionManager);
+		this.leitura.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		this.leitura.setIsolationLevel(org.springframework.transaction.TransactionDefinition.ISOLATION_REPEATABLE_READ);
+		this.leitura.setReadOnly(true);
+		this.leitura.setTimeout(Math.toIntExact(properties.getTimeout().toSeconds()));
 		this.properties = properties;
 		this.usuarioAtual = usuarioAtual;
 		this.usuarios = usuarios;
-		this.passwordEncoder = passwordEncoder;
+        this.reautenticacao = reautenticacao;
 		this.checksum = checksum;
 		this.versoes = versoes;
 		this.auditoria = auditoria;
@@ -82,8 +88,11 @@ public class BackupSqlService {
 			diretorio = Files.createTempDirectory(properties.getDiretorioTemporario(), "apecan-sql-");
 			LocalDateTime agora = LocalDateTime.now(clock);
 			Path arquivo = diretorio.resolve("dados.sql");
-			long registros = quantidadeRegistros();
-			escrever(arquivo, agora, registros);
+			leitura.executeWithoutResult(status -> {
+				long registros = quantidadeRegistros();
+				try { escrever(arquivo, agora, registros); }
+				catch (IOException exception) { throw new java.io.UncheckedIOException(exception); }
+			});
 			if (Files.size(arquivo) > properties.getTamanhoMaximo().toBytes())
 				throw new OperacaoInvalidaException("BACKUP_MUITO_GRANDE", "O arquivo SQL excede o limite configurado.");
 			String hash = checksum.sha256(arquivo);
@@ -183,7 +192,7 @@ public class BackupSqlService {
 	}
 
 	private void escrever(Path arquivo, LocalDateTime agora, long registros) throws IOException {
-		try (BufferedWriter out = Files.newBufferedWriter(arquivo, StandardCharsets.UTF_8)) {
+		try (BufferedWriter out = new BufferedWriter(new java.io.OutputStreamWriter(new com.aclg.apecan.shared.io.SaidaLimitada(Files.newOutputStream(arquivo), properties.getTamanhoMaximo().toBytes()), StandardCharsets.UTF_8))) {
 			out.write("-- APECAN-SQL-BACKUP:" + FORMATO); out.newLine();
 			out.write("-- exportado-em:" + agora); out.newLine();
 			out.write("-- esquema:" + versoes.versaoEsquemaAtual()); out.newLine();
@@ -210,7 +219,11 @@ public class BackupSqlService {
 
 	private void escreverTabela(BufferedWriter out, TabelaBackupSql tabela) {
 		String colunas = String.join(",", tabela.colunas());
-		jdbc.query("SELECT " + colunas + " FROM " + tabela.nome() + ordem(tabela), rs -> {
+		jdbc.query(conexao -> {
+			var consulta = conexao.prepareStatement("SELECT " + colunas + " FROM " + tabela.nome() + ordem(tabela));
+			consulta.setFetchSize(250);
+			return consulta;
+		}, (org.springframework.jdbc.core.RowCallbackHandler) rs -> {
 			ResultSetMetaData meta = rs.getMetaData();
 			List<String> valores = new ArrayList<>();
 			for (int i = 1; i <= meta.getColumnCount(); i++) {
@@ -349,8 +362,7 @@ public class BackupSqlService {
 	private Usuario autenticar(String senha) {
 		Usuario usuario = usuarios.findById(usuarioAtual.exigirId()).orElseThrow(() ->
 			new OperacaoInvalidaException("USUARIO_NAO_ENCONTRADO", "Usuário autenticado inválido."));
-		if (senha == null || !usuario.estaAtivado() || !passwordEncoder.matches(senha, usuario.getSenhaHash()))
-			throw new OperacaoInvalidaException("SENHA_ATUAL_INVALIDA", "A senha atual não confere.");
+		reautenticacao.validar(usuario, senha);
 		return usuario;
 	}
 

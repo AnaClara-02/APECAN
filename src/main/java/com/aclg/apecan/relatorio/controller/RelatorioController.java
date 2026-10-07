@@ -25,16 +25,26 @@ public class RelatorioController {
 	}
 
 	@GetMapping("/{tipo}/exportar")
-	ResponseEntity<byte[]> exportar(@PathVariable String tipo, @RequestParam FormatoRelatorio formato,
-			@RequestParam(required = false) LocalDate inicio, @RequestParam(required = false) LocalDate fim) {
-		RelatorioArquivo arquivo = exportacaoService.exportar(TipoRelatorio.deSlug(tipo), formato, inicio, fim);
-		return ResponseEntity.ok()
-			.contentType(MediaType.parseMediaType(arquivo.mimeType()))
-			.cacheControl(CacheControl.noStore())
-			.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"")
-			.header("X-Content-Type-Options", "nosniff")
-			.body(arquivo.conteudo());
-	}
+    void exportar(@PathVariable String tipo, @RequestParam FormatoRelatorio formato,
+            @RequestParam(required = false) LocalDate inicio, @RequestParam(required = false) LocalDate fim,
+            jakarta.servlet.http.HttpServletResponse resposta) throws java.io.IOException {
+        try (RelatorioArquivo arquivo = exportacaoService.exportar(TipoRelatorio.deSlug(tipo), formato, inicio, fim)) {
+            resposta.setContentType(arquivo.mimeType());
+            resposta.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+            resposta.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.nomeArquivo() + "\"");
+            resposta.setHeader("X-Content-Type-Options", "nosniff");
+            resposta.setContentLengthLong(java.nio.file.Files.size(arquivo.caminho()));
+            java.nio.file.Files.copy(arquivo.caminho(), resposta.getOutputStream());
+        }
+    }
+
+    @ExceptionHandler(com.aclg.apecan.shared.exception.OperacaoInvalidaException.class)
+    ResponseEntity<String> exportacaoRecusada(com.aclg.apecan.shared.exception.OperacaoInvalidaException e) {
+        HttpStatus status = "EXPORTACAO_EM_ANDAMENTO".equals(e.getCodigo())
+                ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.UNPROCESSABLE_ENTITY;
+        return ResponseEntity.status(status).contentType(new MediaType("text", "plain", java.nio.charset.StandardCharsets.UTF_8))
+                .cacheControl(CacheControl.noStore()).body(e.getMessage());
+    }
 
 	@GetMapping
 	String relatorios(@RequestParam(required = false) LocalDate inicio, @RequestParam(required = false) LocalDate fim,

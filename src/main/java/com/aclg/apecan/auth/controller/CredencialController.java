@@ -4,7 +4,6 @@ import com.aclg.apecan.auth.dto.AlterarSenhaForm;
 import com.aclg.apecan.auth.dto.RedefinirSenhaForm;
 import com.aclg.apecan.auth.dto.SolicitarRedefinicaoForm;
 import com.aclg.apecan.auth.service.CredencialService;
-import com.aclg.apecan.auth.service.RedefinicaoEmitida;
 import com.aclg.apecan.shared.exception.RegraNegocioException;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -39,9 +38,8 @@ public class CredencialController {
 		if (bindingResult.hasErrors()) {
 			return "esqueci-senha";
 		}
-		RedefinicaoEmitida emitida = credencialService.solicitar(solicitarRedefinicaoForm.getEmail());
+		credencialService.solicitar(solicitarRedefinicaoForm.getEmail());
 		model.addAttribute("solicitacaoConcluida", true);
-		model.addAttribute("linkLocal", emitida.linkLocal());
 		solicitarRedefinicaoForm.setEmail("");
 		return "esqueci-senha";
 	}

@@ -14,10 +14,7 @@
     <h1>Recuperar senha</h1>
     <p class="texto-secundario">Informe o e-mail cadastrado. A resposta será a mesma mesmo quando a conta não existir.</p>
     <div class="alerta alerta-sucesso" th:if="${solicitacaoConcluida}">
-        Se houver uma conta ativa para esse e-mail, as instruções foram emitidas.
-    </div>
-    <div class="alerta" th:if="${linkLocal}">
-        Ambiente local: <a th:href="${linkLocal}">abrir redefinição de senha</a>.
+        Se a recuperação estiver disponível para essa conta, você receberá as instruções por e-mail.
     </div>
     <form class="formulario" th:action="@{/esqueci-senha}" th:object="${solicitarRedefinicaoForm}" method="post">
         <label for="email">E-mail</label>

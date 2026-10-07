@@ -47,7 +47,7 @@ class PostgreSqlFlywayIntegrationTests {
 				   AND table_name = 'vw_resumo_equipamentos_por_categoria'
 				""", Integer.class);
 
-		assertThat(migracoes).isEqualTo(11);
+		assertThat(migracoes).isEqualTo(12);
 		assertThat(views).isEqualTo(1);
 		Integer tabelaAuditoria = jdbcTemplate.queryForObject("""
 				SELECT COUNT(*) FROM information_schema.tables
@@ -183,7 +183,7 @@ class PostgreSqlFlywayIntegrationTests {
 			POSTGRES.getUsername(),POSTGRES.getPassword());
 		var restaurado=new JdbcTemplate(ds);
 		org.flywaydb.core.Flyway.configure().dataSource(ds).load().validate();
-		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success",Integer.class)).isEqualTo(11);
+		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success",Integer.class)).isEqualTo(12);
 		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM usuarios WHERE id_usuario=?",Integer.class,usuarioId)).isEqualTo(1);
 		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM emprestimos_equipamentos WHERE id_equipamento=?",
 			Integer.class,equipamentoId)).isEqualTo(1);

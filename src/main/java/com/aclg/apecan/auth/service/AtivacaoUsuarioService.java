@@ -9,6 +9,7 @@ import com.aclg.apecan.usuario.entity.TokenCredencial;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.HistoricoAdministracaoUsuarioRepository;
 import com.aclg.apecan.usuario.repository.TokenCredencialRepository;
+import com.aclg.apecan.usuario.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class AtivacaoUsuarioService {
         FinalidadeTokenCredencial.ATIVACAO;
 
     private final TokenCredencialRepository tokenRepository;
+    private final UsuarioRepository usuarioRepository;
     private final HistoricoAdministracaoUsuarioRepository historicoRepository;
     private final GeradorTokenSeguro geradorToken;
     private final PoliticaSenha politicaSenha;
@@ -35,6 +37,7 @@ public class AtivacaoUsuarioService {
 
     public AtivacaoUsuarioService(
             TokenCredencialRepository tokenRepository,
+            UsuarioRepository usuarioRepository,
             HistoricoAdministracaoUsuarioRepository historicoRepository,
             GeradorTokenSeguro geradorToken,
             PoliticaSenha politicaSenha,
@@ -43,6 +46,7 @@ public class AtivacaoUsuarioService {
             Clock clock,
             @Value("${apecan.ativacao.validade:24h}") Duration validade) {
         this.tokenRepository = tokenRepository;
+        this.usuarioRepository = usuarioRepository;
         this.historicoRepository = historicoRepository;
         this.geradorToken = geradorToken;
         this.politicaSenha = politicaSenha;
@@ -54,6 +58,7 @@ public class AtivacaoUsuarioService {
 
     @Transactional
     public AtivacaoEmitida emitir(Usuario usuario) {
+        usuario = usuarioRepository.findByIdForUpdate(usuario.getId()).orElseThrow(this::tokenInvalido);
         if (usuario.getStatus() != StatusUsuario.ATIVO
                 || !usuario.isPrimeiroAcessoPendente()) {
             throw new OperacaoInvalidaException(
@@ -122,6 +127,11 @@ public class AtivacaoUsuarioService {
         }
 
         String hash = geradorToken.calcularHash(tokenOriginal);
+        if (bloquear) {
+            Long usuarioId = tokenRepository.findUsuarioId(hash, FINALIDADE).orElseThrow(this::tokenInvalido);
+            // Mesma ordem usada na emissão e nas mudanças administrativas.
+            usuarioRepository.findByIdForUpdate(usuarioId).orElseThrow(this::tokenInvalido);
+        }
         TokenCredencial token = (bloquear
             ? tokenRepository.findForUpdateByTokenHashAndFinalidade(hash, FINALIDADE)
             : tokenRepository.findByTokenHashAndFinalidade(hash, FINALIDADE))

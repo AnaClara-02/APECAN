@@ -187,12 +187,15 @@ class ModulosOperacionaisServiceTests {
 		formulario.setDescricao("Valor iniciado por formula");
 		financeiro.registrar(formulario);
 
-		var xlsx = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.XLSX, null, null);
-		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx.conteudo()))) {
-			assertThat(workbook.getSheetAt(0).getRow(4).getCell(4).getStringCellValue()).isEqualTo("'=2+2");
-		}
-		var pdf = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.PDF, null, null);
-		assertThat(new String(pdf.conteudo(), 0, 4, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+        try (var xlsx = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.XLSX, null, null);
+                var entrada = java.nio.file.Files.newInputStream(xlsx.caminho());
+                XSSFWorkbook workbook = new XSSFWorkbook(entrada)) {
+            assertThat(workbook.getSheetAt(0).getRow(4).getCell(4).getStringCellValue()).isEqualTo("'=2+2");
+        }
+        try (var pdf = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.PDF, null, null);
+                var entrada = java.nio.file.Files.newInputStream(pdf.caminho())) {
+            assertThat(new String(entrada.readNBytes(4), java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+        }
 		assertThat(historicoExportacoes.count()).isEqualTo(2);
 	}
 

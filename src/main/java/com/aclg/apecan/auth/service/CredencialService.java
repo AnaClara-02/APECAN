@@ -4,6 +4,7 @@ import com.aclg.apecan.auth.dto.AlterarSenhaForm;
 import com.aclg.apecan.auth.dto.RedefinirSenhaForm;
 import com.aclg.apecan.auth.security.SessaoUsuarioService;
 import com.aclg.apecan.auth.security.UsuarioAtual;
+import com.aclg.apecan.auth.security.ReautenticacaoService;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.shared.exception.RecursoNaoEncontradoException;
 import com.aclg.apecan.usuario.entity.FinalidadeTokenCredencial;
@@ -36,6 +37,7 @@ public class CredencialService {
 	private final UsuarioRepository usuarioRepository;
 
 	private final TokenCredencialRepository tokenRepository;
+    private final RevogacaoTokensService revogacaoTokens;
 
 	private final HistoricoAdministracaoUsuarioRepository historicoRepository;
 
@@ -44,6 +46,7 @@ public class CredencialService {
 	private final PoliticaSenha politicaSenha;
 
 	private final PasswordEncoder passwordEncoder;
+    private final ReautenticacaoService reautenticacao;
 
 	private final EntregaRedefinicaoSenha entrega;
 
@@ -57,19 +60,21 @@ public class CredencialService {
 	private final com.aclg.apecan.auth.security.LimiteRecuperacaoService limiteRecuperacao;
 	private final org.springframework.transaction.support.TransactionTemplate transacao;
 
-	public CredencialService(UsuarioRepository usuarioRepository, TokenCredencialRepository tokenRepository,
+	public CredencialService(UsuarioRepository usuarioRepository, TokenCredencialRepository tokenRepository, RevogacaoTokensService revogacaoTokens,
 			HistoricoAdministracaoUsuarioRepository historicoRepository, GeradorTokenSeguro geradorToken,
-			PoliticaSenha politicaSenha, PasswordEncoder passwordEncoder, EntregaRedefinicaoSenha entrega,
+			PoliticaSenha politicaSenha, PasswordEncoder passwordEncoder, EntregaRedefinicaoSenha entrega, ReautenticacaoService reautenticacao,
 			UsuarioAtual usuarioAtual, SessaoUsuarioService sessaoService, Clock clock,
 			@Value("${apecan.redefinicao.validade:1h}") Duration validade,
 			com.aclg.apecan.auth.security.LimiteRecuperacaoService limiteRecuperacao,
 			org.springframework.transaction.PlatformTransactionManager transactionManager) {
 		this.usuarioRepository = usuarioRepository;
 		this.tokenRepository = tokenRepository;
+        this.revogacaoTokens = revogacaoTokens;
 		this.historicoRepository = historicoRepository;
 		this.geradorToken = geradorToken;
 		this.politicaSenha = politicaSenha;
 		this.passwordEncoder = passwordEncoder;
+        this.reautenticacao = reautenticacao;
 		this.entrega = entrega;
 		this.usuarioAtual = usuarioAtual;
 		this.sessaoService = sessaoService;
@@ -86,7 +91,7 @@ public class CredencialService {
 
 	private RedefinicaoEmitida solicitarPermitido(String email) {
 		String normalizado = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
-		Usuario usuario = usuarioRepository.findByEmail(normalizado).orElse(null);
+		Usuario usuario = usuarioRepository.findByEmailForUpdate(normalizado).orElse(null);
 		if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO || !usuario.estaAtivado()) {
 			return new RedefinicaoEmitida(null);
 		}
@@ -113,7 +118,7 @@ public class CredencialService {
 		Usuario usuario = token.getUsuario();
 		LocalDateTime agora = LocalDateTime.now(clock);
 		usuario.alterarSenha(passwordEncoder.encode(form.getSenha()));
-		token.marcarComoUtilizado(agora);
+		revogacaoTokens.revogarPendentes(usuario);
 		registrar(usuario, TipoEventoAdministracaoUsuario.REDEFINICAO_SENHA, "Senha redefinida por token de uso unico.",
 				agora);
 		usuarioRepository.flush();
@@ -126,14 +131,13 @@ public class CredencialService {
 		Usuario usuario = usuarioRepository.findByIdForUpdate(usuarioAtual.exigirId())
 			.orElseThrow(() -> new RecursoNaoEncontradoException("USUARIO_ATUAL_NAO_ENCONTRADO",
 					"Usuario autenticado nao encontrado."));
-		if (!passwordEncoder.matches(form.getSenhaAtual(), usuario.getSenhaHash())) {
-			throw new OperacaoInvalidaException("SENHA_ATUAL_INVALIDA", "A senha atual e invalida.");
-		}
+		reautenticacao.validar(usuario, form.getSenhaAtual());
 		if (passwordEncoder.matches(form.getNovaSenha(), usuario.getSenhaHash())) {
 			throw new OperacaoInvalidaException("SENHA_NAO_ALTERADA", "A nova senha deve ser diferente da atual.");
 		}
 		LocalDateTime agora = LocalDateTime.now(clock);
 		usuario.alterarSenha(passwordEncoder.encode(form.getNovaSenha()));
+		revogacaoTokens.revogarPendentes(usuario);
 		registrar(usuario, TipoEventoAdministracaoUsuario.ALTERACAO_SENHA, "Senha alterada pelo proprio usuario.",
 				agora);
 		usuarioRepository.flush();
@@ -145,6 +149,11 @@ public class CredencialService {
 			throw tokenInvalido();
 		}
 		String hash = geradorToken.calcularHash(original);
+		if (bloquear) {
+			Long usuarioId = tokenRepository.findUsuarioId(hash, FINALIDADE).orElseThrow(this::tokenInvalido);
+			// Mesma ordem de bloqueios da emissão e troca autenticada: usuário, depois token.
+			usuarioRepository.findByIdForUpdate(usuarioId).orElseThrow(this::tokenInvalido);
+		}
 		TokenCredencial token = (bloquear ? tokenRepository.findForUpdateByTokenHashAndFinalidade(hash, FINALIDADE)
 				: tokenRepository.findByTokenHashAndFinalidade(hash, FINALIDADE))
 			.orElseThrow(this::tokenInvalido);

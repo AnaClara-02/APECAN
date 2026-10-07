@@ -45,14 +45,21 @@ class CredencialServiceTests {
 	@Autowired
 	PasswordEncoder passwordEncoder;
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    EntregaRedefinicaoSenha entrega;
+
 	@Test
 	void deveResponderGenericamenteEUsarTokenDeRedefinicaoUmaUnicaVez() {
 		UsuarioCriadoResultado criado = usuarioService.cadastrarPrimeiroAdministrador(formulario());
 		ativacaoService.ativar(extrairToken(criado.ativacao().linkLocal()), SENHA_ANTIGA, SENHA_ANTIGA);
 
 		assertThat(credencialService.solicitar("inexistente@example.invalid").linkLocal()).isNull();
-		String link = credencialService.solicitar(" ADMIN.RESET@APECAN.ORG.BR ").linkLocal();
-		String token = extrairToken(link);
+        org.mockito.Mockito.when(entrega.entregar(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString()))
+            .thenReturn(new RedefinicaoEmitida(null));
+        assertThat(credencialService.solicitar(" ADMIN.RESET@APECAN.ORG.BR ").linkLocal()).isNull();
+        var captor = org.mockito.ArgumentCaptor.forClass(String.class);
+        org.mockito.Mockito.verify(entrega).entregar(org.mockito.ArgumentMatchers.any(), captor.capture());
+        String token = captor.getValue();
 
 		assertThat(tokenRepository.findAll())
 			.anyMatch(persistido -> persistido.getFinalidade() == FinalidadeTokenCredencial.REDEFINICAO_SENHA
