@@ -60,7 +60,7 @@ controller -> service -> repository -> PostgreSQL
   em planilhas e auditoria;
 - modo noturno acessível, com preferência persistida no navegador.
 - backup operacional em arquivo `.sql`, sem contas de acesso, preservando nomes
-  de autoria e com importação transacional confirmada pelo administrador.
+  de autoria e com importação transacional confirmada pelo usuário autenticado.
 
 ## Banco e configuracao
 
@@ -189,13 +189,24 @@ A suite cobre autenticacao, autorizacao, CSRF, validacao de CPF, auditoria, paci
 10. Backup operacional foi definido como SQL controlado. Ele não transporta
     contas, senhas ou permissões; preserva o nome e a data do autor histórico.
     Relatórios continuam sendo exportações de consulta, não backups.
-11. A importação é feita por um administrador já criado na instalação de destino.
+11. A importação é feita por um usuário autenticado (administrador ou usuário comum)
+    já criado na instalação de destino.
     Ela compara arquivo e dados atuais, pede confirmação e substitui somente as
     tabelas operacionais, preservando as contas locais.
 12. O documento acadêmico foi revisado usando a versão mais recente fornecida em
     ZIP como base, conforme escolha explícita do usuário. Foram alinhados
     tecnologias, RF01–RF16, diagrama e alegações de resultados. PDF e LaTeX
     revisados foram entregues separadamente e não fazem parte deste repositório.
+
+### Atualização de interface e permissões — 08/10/2026
+
+- As telas e páginas de erro usam `system-ui` e fontes locais de fallback, sem
+  baixar Nunito para a interface. A fonte dos relatórios PDF foi preservada.
+- O menu Backup e as rotas de exportação/importação permitem `ADMINISTRADOR` e
+  `USUARIO`; confirmação de senha, CSRF, autoria e validação do arquivo permanecem.
+- As demais áreas administrativas continuam exclusivas do administrador.
+- A desativação da própria conta administrativa é proibida no service e omitida
+  na tela; a desativação de outras contas mantém a proteção do último administrador.
 
 ## Operação segura e diagnóstico
 

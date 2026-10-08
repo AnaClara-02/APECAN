@@ -197,6 +197,12 @@ linha falhar, os dados anteriores permanecem.
 Depois da importação, valide relacionamentos, IDs, relatórios e login. Registros
 mostram o autor e a data originais e, quando recuperados, a data de importação.
 
+O perfil Render limita tanto a exportação SQL quanto seu upload a 5 MB
+(requisição multipart de até 6 MB). A aplicação recusa configurações em que
+o tamanho permitido para exportação excede o upload. Para bases maiores,
+planeje uma janela de restauração e infraestrutura com limites compatíveis;
+um arquivo acima do limite não é entregue como backup completo.
+
 ## 7. Critérios antes de dados reais
 
 - Homologação integral com dados fictícios, incluindo um restore comprovado.

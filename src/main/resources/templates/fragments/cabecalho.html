@@ -47,7 +47,7 @@
                     <svg aria-hidden="true"><use th:href="@{/images/icons.svg#usuarios}"></use></svg><span>Usuários</span>
                 </a>
             </th:block>
-            <th:block th:if="${usuarioLogado != null and usuarioLogado.administrador()}">
+            <th:block th:if="${usuarioLogado != null}">
                 <p class="grupo-menu">Backup</p>
                 <a class="item-menu" th:href="@{/administracao/backups/exportacao}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? 'page' : null">
                     <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Exportação</span>

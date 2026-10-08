@@ -8,6 +8,7 @@ import com.aclg.apecan.usuario.dto.NovoUsuarioForm;
 import com.aclg.apecan.usuario.dto.UsuarioCriadoResultado;
 import com.aclg.apecan.usuario.entity.TipoEventoAdministracaoUsuario;
 import com.aclg.apecan.usuario.entity.TipoPerfil;
+import com.aclg.apecan.usuario.entity.StatusUsuario;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.HistoricoAdministracaoUsuarioRepository;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
@@ -20,11 +21,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -47,6 +54,9 @@ class AdministracaoUsuarioServiceTests {
 
     @Autowired
     private SessionRegistry sessionRegistry;
+
+    @Autowired
+    private WebApplicationContext applicationContext;
 
     @AfterEach
     void limparSeguranca() {
@@ -92,6 +102,61 @@ class AdministracaoUsuarioServiceTests {
                 TipoEventoAdministracaoUsuario.PROMOCAO_ADMINISTRADOR,
                 TipoEventoAdministracaoUsuario.REBAIXAMENTO_USUARIO
             );
+    }
+
+    @Test
+    void deveImpedirAutodesativacaoMesmoComOutroAdministradorAtivo() {
+        Usuario primeiro = criarEAtivarPrimeiroAdministrador();
+        autenticar(primeiro);
+        UsuarioCriadoResultado resultado = usuarioService.cadastrar(formularioSegundo());
+        ativacaoService.ativar(extrairToken(resultado.ativacao().linkLocal()), SENHA_SEGUNDO, SENHA_SEGUNDO);
+        Usuario segundo = usuarioRepository.findByLogin("segundo.admin").orElseThrow();
+        usuarioService.promover(segundo.getId(), confirmacao(SENHA_ADMIN, "Criacao de administrador adicional."));
+        long quantidadeHistorico = historicoRepository.count();
+
+        assertThatThrownBy(() -> usuarioService.desativar(primeiro.getId(),
+            confirmacao(SENHA_ADMIN, "Tentativa de desativar a propria conta.")))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("propria conta");
+        assertThat(primeiro.getStatus()).isEqualTo(StatusUsuario.ATIVO);
+        assertThat(historicoRepository.count()).isEqualTo(quantidadeHistorico);
+    }
+
+    @Test
+    void devePermitirDesativacaoDeOutraConta() {
+        Usuario primeiro = criarEAtivarPrimeiroAdministrador();
+        autenticar(primeiro);
+        UsuarioCriadoResultado resultado = usuarioService.cadastrar(formularioSegundo());
+        ativacaoService.ativar(extrairToken(resultado.ativacao().linkLocal()), SENHA_SEGUNDO, SENHA_SEGUNDO);
+        Usuario segundo = usuarioRepository.findByLogin("segundo.admin").orElseThrow();
+
+        usuarioService.desativar(segundo.getId(), confirmacao(SENHA_ADMIN, "Encerramento do acesso do funcionario."));
+        assertThat(segundo.getStatus()).isEqualTo(StatusUsuario.INATIVO);
+        assertThat(primeiro.getStatus()).isEqualTo(StatusUsuario.ATIVO);
+        assertThat(historicoRepository.findAll()).extracting("tipoEvento")
+            .contains(TipoEventoAdministracaoUsuario.DESATIVACAO);
+    }
+
+    @Test
+    void telaDeveOcultarAutodesativacaoEPreservarAcaoParaOutraConta() throws Exception {
+        Usuario primeiro = criarEAtivarPrimeiroAdministrador();
+        autenticar(primeiro);
+        usuarioService.cadastrar(formularioSegundo());
+        Usuario segundo = usuarioRepository.findByLogin("segundo.admin").orElseThrow();
+        var mvc = MockMvcBuilders.webAppContextSetup(applicationContext).apply(springSecurity()).build();
+        var autenticado = user(UsuarioPrincipal.de(primeiro));
+
+        String propriaConta = mvc.perform(get("/usuarios/" + primeiro.getId()).with(autenticado))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(propriaConta).doesNotContain("/usuarios/" + primeiro.getId() + "/desativar");
+        String outraConta = mvc.perform(get("/usuarios/" + segundo.getId()).with(autenticado))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(outraConta).contains("/usuarios/" + segundo.getId() + "/desativar");
+
+        String menuComum = mvc.perform(get("/inicio").with(user(UsuarioPrincipal.de(segundo))))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(menuComum).contains("/administracao/backups/exportacao", "/administracao/backups/importacao")
+            .doesNotContain("href=\"/usuarios\"");
     }
 
     private Usuario criarEAtivarPrimeiroAdministrador() {

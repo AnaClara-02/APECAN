@@ -255,6 +255,12 @@ public class UsuarioService {
     public void desativar(Long id, @Valid AlterarAcessoForm formulario) {
         ContextoAlteracao contexto = prepararAlteracao(id, formulario);
         Usuario alvo = contexto.alvo();
+        if (alvo.getId().equals(contexto.responsavel().getId())) {
+            throw new OperacaoInvalidaException(
+                "AUTODESATIVACAO_NAO_PERMITIDA",
+                "Voce nao pode desativar sua propria conta. Solicite a outro administrador."
+            );
+        }
         if (alvo.getStatus() == StatusUsuario.INATIVO) {
             throw new OperacaoInvalidaException(
                 "USUARIO_JA_INATIVO",

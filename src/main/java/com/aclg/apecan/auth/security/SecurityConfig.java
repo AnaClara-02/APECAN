@@ -59,6 +59,8 @@ public class SecurityConfig {
 			.requestMatchers("/login", "/ativar-conta", "/esqueci-senha", "/redefinir-senha", "/error", "/error/**",
 					"/css/**", "/js/**", "/images/**", "/fonts/**", "/actuator/health", "/actuator/health/**")
 			.permitAll()
+			.requestMatchers("/administracao/backups", "/administracao/backups/**")
+			.hasAnyRole("ADMINISTRADOR", "USUARIO")
 			.requestMatchers("/usuarios/**", "/configuracoes/**", "/administracao/**", "/api/usuarios/**", "/api/configuracoes/**",
 					"/actuator/info")
 			.hasRole("ADMINISTRADOR")

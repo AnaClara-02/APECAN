@@ -94,7 +94,7 @@ formato, filtros não pessoais, quantidade, responsável e data.
 
 ## Backup e recuperação
 
-Administradores usam **Backup > Exportação** para gerar um arquivo `.sql` com
+Administradores e usuários comuns usam **Backup > Exportação** para gerar um arquivo `.sql` com
 os dados operacionais. Pacientes, voluntários, equipamentos, empréstimos,
 doações e financeiro são incluídos, juntamente com os nomes históricos dos
 autores. Contas, senhas, tokens, sessões e permissões não são exportados.
@@ -102,11 +102,21 @@ autores. Contas, senhas, tokens, sessões e permissões não são exportados.
 O SQL não é criptografado e contém dados pessoais legíveis. Ele deve ser
 guardado em mídia protegida e fora do computador servidor.
 
+A exportação SQL usa uma transação de leitura `REPEATABLE_READ`, para que
+contagens e tabelas representem o mesmo instante. No Render, exportação e
+upload têm limite de 5 MB. Fora desse perfil, o limite padrão continua em 2 GB.
+A inicialização recusa configurações em que o backup não cabe no upload ou
+falta 1 MB adicional no limite total da requisição multipart.
+
 Em **Backup > Importação**, o APECAN aceita somente a estrutura SQL gerada por
 ele próprio. Antes da substituição, exibe nome, data, tamanho e quantidade de
 registros do arquivo ao lado das informações dos dados atuais. A confirmação
-exige a senha do administrador, preserva as contas da instalação e aplica toda
+exige a senha atual do usuário autenticado, preserva as contas da instalação e aplica toda
 a substituição em uma única transação.
+
+Administradores e usuários comuns podem exportar e importar backups. As demais
+áreas administrativas continuam exclusivas dos administradores. A importação
+pode substituir dados operacionais: confira a comparação antes de confirmar.
 
 Durante o desenvolvimento, informe explicitamente a configuração local:
 
@@ -128,15 +138,34 @@ O Java de compilação e implantação é o Java 25 LTS.
 ## Regras de seguranca do acesso
 
 - contas são criadas sem senha e aguardam ativação;
-- o token original é exibido apenas no momento da emissão;
+- a ativação local exibe o token apenas ao administrador que o emite;
+- tokens de redefinição nunca aparecem na resposta pública; a recuperação de
+  senha requer entrega por e-mail (`APECAN_PASSWORD_RESET_DELIVERY=email`);
 - somente o hash SHA-256 do token é persistido;
 - senhas usam `DelegatingPasswordEncoder` com BCrypt;
 - não existe cadastro público;
 - cada administrador possui conta individual;
+- um administrador não pode desativar a própria conta, mesmo havendo outro administrador ativo;
 - o último administrador ativo não pode ser desativado ou rebaixado;
 - alterações de perfil e status ficam registradas no histórico administrativo.
-- restauração completa só é aceita localmente em instalação vazia ou no perfil
-  restrito de recuperação.
+- restauração completa exige o perfil `recovery`, listener de loopback e
+  `server.forward-headers-strategy=none`; banco vazio não habilita esse acesso;
+- troca e redefinição de senha revogam os tokens de ativação e recuperação anteriores;
+- mudança efetiva de e-mail, desativação e reativação também revogam todos os
+  links pendentes, na mesma transação da alteração da conta;
+- confirmação de senha tem limite persistente de cinco falhas, com bloqueio
+  de 15 minutos compartilhado entre troca de senha, administração e backup.
+
+## Limites dos relatórios
+
+PDF e XLSX são gerados em arquivo temporário, lidos em lotes e apagados ao
+final do download, inclusive em falhas. Uma exportação por instância pode
+ficar em andamento, incluindo sua transmissão. Os padrões são 10.000 registros,
+20 MB de saída e 60 segundos de geração; arquivos acima do limite são recusados,
+sem truncar dados. Configure `apecan.relatorios.max-registros`,
+`apecan.relatorios.max-bytes` e `apecan.relatorios.timeout-segundos` dentro dos
+tetos de 50.000 registros, 50 MB e 120 segundos. Revise capacidade antes de elevar
+os padrões.
 
 ## Cuidados antes da produção
 
@@ -149,3 +178,7 @@ Antes de executar mais de uma instância, persistir sessões HTTP em armazenamen
 compartilhado e revisar a invalidação das sessões. Os controles de tentativas de
 login e recuperação já são persistidos no PostgreSQL pela V10; a V11 implementa
 o transporte SQL dos dados operacionais sem transportar contas.
+
+A V12 invalida uma única vez os links pendentes emitidos antes da correção A01.
+Após a atualização, reenvie convites de ativação necessários; quem precisar
+recuperar a senha deve solicitar um novo link. Senhas e cadastros são preservados.

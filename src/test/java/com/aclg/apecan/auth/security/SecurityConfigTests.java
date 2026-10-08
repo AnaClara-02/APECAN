@@ -66,27 +66,44 @@ class SecurityConfigTests {
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.codigo").value("ACESSO_NEGADO"));
 
-		mockMvc.perform(get("/administracao/backups").with(user("comum").roles("USUARIO")))
+		mockMvc.perform(get("/administracao/outra-area").with(user("comum").roles("USUARIO")))
 			.andExpect(status().isForbidden());
     }
 
 	@Test
-	void painelDeBackupDeveSerExclusivoDoAdministradorEExigirCsrf() throws Exception {
-		mockMvc.perform(get("/administracao/backups").with(user("admin").roles("ADMINISTRADOR")))
-			.andExpect(status().isOk());
-
-		mockMvc.perform(post("/administracao/backups/exportacao")
-				.with(user("admin").roles("ADMINISTRADOR")))
-			.andExpect(status().isForbidden());
+	void backupDevePermitirAmbosOsPerfisEExigirCsrf() throws Exception {
+		for (String perfil : new String[]{"ADMINISTRADOR", "USUARIO"}) {
+			for (String pagina : new String[]{"", "/exportacao", "/importacao"}) {
+				mockMvc.perform(get("/administracao/backups" + pagina).with(user("conta").roles(perfil)))
+					.andExpect(status().isOk());
+			}
+			for (String operacao : new String[]{"/exportacao", "/importacao/analisar", "/importacao/confirmar", "/importacao/cancelar"}) {
+				mockMvc.perform(post("/administracao/backups" + operacao).with(user("conta").roles(perfil)))
+					.andExpect(status().isForbidden());
+			}
+		}
+		mockMvc.perform(get("/administracao/backups/importacao"))
+			.andExpect(status().isFound())
+			.andExpect(redirectedUrl("/login"));
 	}
 
 	@Test
 	void painelDeBackupDeveExigirSenhaAtual() throws Exception {
-		mockMvc.perform(post("/administracao/backups/exportacao")
-				.with(user("admin").roles("ADMINISTRADOR"))
-				.with(csrf()))
+		for (String perfil : new String[]{"ADMINISTRADOR", "USUARIO"}) {
+			mockMvc.perform(post("/administracao/backups/exportacao")
+					.with(user("conta").roles(perfil))
+					.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(model().attributeHasFieldErrors("exportarBackupSqlForm", "senhaAtual"));
+		}
+	}
+
+	@Test
+	void usuarioComumDevePoderAnalisarImportacaoComCsrf() throws Exception {
+		mockMvc.perform(post("/administracao/backups/importacao/analisar")
+				.with(user("comum").roles("USUARIO")).with(csrf()))
 			.andExpect(status().isOk())
-			.andExpect(model().attributeHasFieldErrors("exportarBackupSqlForm", "senhaAtual"));
+			.andExpect(model().attributeHasFieldErrors("importarBackupSqlForm", "arquivo"));
 	}
 
 	@Test

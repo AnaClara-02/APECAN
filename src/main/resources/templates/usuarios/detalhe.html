@@ -61,6 +61,7 @@
 
             <form class="formulario formulario-compacto"
                   th:object="${alterarAcessoForm}"
+                  th:if="${usuarioLogado != null and usuario.id != usuarioLogado.id()}"
                   th:action="${usuario.estaAtivo()}
                     ? @{/usuarios/{id}/desativar(id=${usuario.id})}
                     : @{/usuarios/{id}/reativar(id=${usuario.id})}"
