@@ -109,8 +109,10 @@ public class EmprestimoService {
 
 	@Transactional
 	public void devolver(Long id, @Valid DevolucaoForm f) {
+		Long equipamentoId = emprestimos.findEquipamentoIdById(id).orElseThrow(this::naoEncontrado);
+		Equipamento eq = equipamentos.findByIdForUpdate(equipamentoId)
+			.orElseThrow(() -> new RecursoNaoEncontradoException("EQUIPAMENTO_NAO_ENCONTRADO", "Equipamento nao encontrado."));
 		EmprestimoEquipamento e = emprestimos.findByIdForUpdate(id).orElseThrow(() -> naoEncontrado());
-		Equipamento eq = equipamentos.findByIdForUpdate(e.getEquipamento().getId()).orElseThrow();
 		Usuario u = responsavel();
 		e.registrarDevolucao(f.getDataDevolucao(), u, f.getEstadoConservacao());
 		eq.registrarDevolucao(f.getEstadoConservacao(), u);

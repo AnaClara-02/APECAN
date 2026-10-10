@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Detalhes do usuário | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
@@ -12,7 +13,7 @@
 <main id="conteudo-principal" class="conteudo">
     <section class="cabecalho-pagina">
         <div><p class="rotulo">Usuário</p><h1 th:text="${usuario.nome}">Nome</h1></div>
-        <div class="acoes"><a class="botao botao-secundario" th:href="@{/usuarios}">Voltar</a><a class="botao botao-primario" th:href="@{/usuarios/{id}/editar(id=${usuario.id})}">Editar dados</a></div>
+        <div class="acoes"><a class="botao botao-secundario" th:href="@{/usuarios}">Voltar</a><a class="botao botao-primario" th:if="${podeGerenciarUsuario}" th:href="@{/usuarios/{id}/editar(id=${usuario.id})}">Editar dados</a></div>
     </section>
 
     <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
@@ -25,7 +26,7 @@
                 <dt>CPF</dt><dd th:text="${usuario.cpf}">CPF</dd>
                 <dt>E-mail</dt><dd th:text="${usuario.email}">email</dd>
                 <dt>Telefone</dt><dd th:text="${usuario.telefone}">telefone</dd>
-                <dt>Perfil</dt><dd th:text="${usuario.tipoPerfil}">perfil</dd>
+                <dt>Perfil</dt><dd th:text="${usuario.tipoPerfil.rotulo()}">perfil</dd>
                 <dt>Status</dt><dd th:text="${usuario.status}">status</dd>
                 <dt>Ativação</dt><dd th:text="${usuario.primeiroAcessoPendente ? 'Pendente' : 'Concluída'}">estado</dd>
             </dl>
@@ -38,30 +39,33 @@
             </p>
 
             <form class="formulario formulario-compacto"
-                  th:if="${usuario.primeiroAcessoPendente and usuario.estaAtivo()}"
+                  th:if="${podeGerenciarUsuario and usuario.primeiroAcessoPendente and usuario.estaAtivo()}"
                   th:action="@{/usuarios/{id}/reenviar-ativacao(id=${usuario.id})}" method="post">
                 <button class="botao botao-secundario" type="submit">Gerar novo link de ativação</button>
             </form>
 
             <form class="formulario formulario-compacto"
+                  th:if="${podeGerenciarUsuario}"
                   th:object="${alterarAcessoForm}"
-                  th:action="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'}
-                    ? @{/usuarios/{id}/rebaixar(id=${usuario.id})}
-                    : @{/usuarios/{id}/promover(id=${usuario.id})}"
+                  th:action="@{/usuarios/{id}/perfil(id=${usuario.id})}"
                   method="post">
+                <label for="novoPerfil">Perfil</label>
+                <select id="novoPerfil" th:field="*{novoPerfil}" required>
+                    <option value="">Selecione</option>
+                    <option th:each="perfil : ${perfisDisponiveis}" th:value="${perfil}" th:text="${perfil.rotulo()}">Perfil</option>
+                </select>
                 <label for="justificativaPerfil">Justificativa</label>
                 <textarea id="justificativaPerfil" th:field="*{justificativa}" maxlength="500" required></textarea>
                 <label for="senhaPerfil">Sua senha atual</label>
                 <input id="senhaPerfil" type="password" th:field="*{senhaAtual}" autocomplete="current-password" required>
-                <button class="botao botao-secundario" type="submit"
-                        th:text="${usuario.tipoPerfil.name() == 'ADMINISTRADOR'} ? 'Alterar para usuário' : 'Promover a administrador'">
+                <button class="botao botao-secundario" type="submit">
                     Alterar perfil
                 </button>
             </form>
 
             <form class="formulario formulario-compacto"
                   th:object="${alterarAcessoForm}"
-                  th:if="${usuarioLogado != null and usuario.id != usuarioLogado.id()}"
+                  th:if="${podeGerenciarUsuario and usuarioLogado != null and usuario.id != usuarioLogado.id()}"
                   th:action="${usuario.estaAtivo()}
                     ? @{/usuarios/{id}/desativar(id=${usuario.id})}
                     : @{/usuarios/{id}/reativar(id=${usuario.id})}"

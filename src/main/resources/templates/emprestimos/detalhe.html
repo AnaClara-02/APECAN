@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Empréstimo | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Empréstimo | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}">    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+</head>
 <body><header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
 <main id="conteudo-principal" class="conteudo"><div th:replace="~{fragments/cabecalho :: mensagens}"></div><section class="cabecalho-pagina"><div><p class="rotulo">Empréstimo</p><h1 th:text="|Empréstimo #${emprestimo.id}|"></h1><span class="status" th:classappend="${emprestimo.atrasado} ? ' status-perigo' : (${emprestimo.dataDevolucao == null} ? ' status-aviso' : ' status-sucesso')" th:text="${emprestimo.atrasado ? 'Atrasado' : (emprestimo.dataDevolucao == null ? 'Aberto' : 'Concluído')}"></span></div><a class="botao botao-secundario" th:href="@{/emprestimos}">Voltar</a></section>
     <section class="grade-cartoes"><article class="cartao dados"><h2>Dados do empréstimo</h2><dl><dt>Equipamento</dt><dd th:text="|#${emprestimo.equipamentoId} · ${emprestimo.categoria}|"></dd><dt>Paciente</dt><dd th:text="${emprestimo.paciente}"></dd><dt>Data do empréstimo</dt><dd th:text="${emprestimo.dataEmprestimo}"></dd><dt>Previsão</dt><dd th:text="${emprestimo.dataPrevistaDevolucao}"></dd><dt th:if="${emprestimo.dataDevolucao}">Devolução</dt><dd th:if="${emprestimo.dataDevolucao}" th:text="${emprestimo.dataDevolucao}"></dd></dl></article>

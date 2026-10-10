@@ -40,7 +40,7 @@ public class BootstrapAdministradorRunner implements ApplicationRunner {
             }
             System.out.println();
             System.out.println("=== Configuracao inicial do APECAN ===");
-            System.out.println("Informe os dados do primeiro administrador.");
+            System.out.println("Informe os dados do primeiro Adm. Dev.");
 
             NovoUsuarioForm formulario = new NovoUsuarioForm();
             formulario.setNome(ler(scanner, "Nome: "));
@@ -53,7 +53,7 @@ public class BootstrapAdministradorRunner implements ApplicationRunner {
                 usuarioService.cadastrarPrimeiroAdministrador(formulario);
 
             System.out.println();
-            System.out.println("Administrador pendente criado com sucesso.");
+            System.out.println("Adm. Dev. pendente criado com sucesso.");
             if (resultado.ativacao().linkLocal() != null) {
                 System.out.println("Entregue o link abaixo ao administrador. Ele e exibido uma unica vez:");
                 System.out.println(resultado.ativacao().linkLocal());

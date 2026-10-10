@@ -47,7 +47,7 @@ class PostgreSqlFlywayIntegrationTests {
 				   AND table_name = 'vw_resumo_equipamentos_por_categoria'
 				""", Integer.class);
 
-		assertThat(migracoes).isEqualTo(12);
+		assertThat(migracoes).isEqualTo(14);
 		assertThat(views).isEqualTo(1);
 		Integer tabelaAuditoria = jdbcTemplate.queryForObject("""
 				SELECT COUNT(*) FROM information_schema.tables
@@ -59,6 +59,13 @@ class PostgreSqlFlywayIntegrationTests {
 				 WHERE table_schema = 'public' AND table_name = 'historico_backups'
 				""", Integer.class);
 		assertThat(tabelaAuditoriaBackup).isEqualTo(1);
+		Integer auditoriaExclusoes = jdbcTemplate.queryForObject("""
+				SELECT COUNT(*) FROM information_schema.tables
+				 WHERE table_schema = 'public' AND table_name = 'auditoria_exclusoes_teste'
+				""", Integer.class);
+		assertThat(auditoriaExclusoes).isEqualTo(1);
+		assertThat(jdbcTemplate.queryForObject("SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1", String.class))
+			.isEqualTo("14");
 
 		String senhaTeste = "senha-ficticia-integracao";
 		Long usuarioId = jdbcTemplate.queryForObject("""
@@ -125,11 +132,14 @@ class PostgreSqlFlywayIntegrationTests {
 		org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(autenticacao);
 		try {
 			var exportado = backupSqlService.exportar(senha);
-			byte[] conteudo = java.nio.file.Files.readAllBytes(exportado.caminho());
-			String sql = new String(conteudo, java.nio.charset.StandardCharsets.UTF_8);
-			assertThat(sql).contains("-- APECAN-SQL-BACKUP:1", "INSERT INTO pacientes");
+			String sql = java.nio.file.Files.readString(exportado.caminho(), java.nio.charset.StandardCharsets.UTF_8);
+			assertThat(sql).contains("-- APECAN-SQL-BACKUP:1", "-- esquema:14", "INSERT INTO pacientes");
 			assertThat(sql).doesNotContain("teste.integracao", "integracao@example.invalid", "senha-ficticia");
 			backupSqlService.limpar(exportado);
+			// V13/V14 só alteram gestão de contas/auditoria, ausentes no backup operacional;
+			// portanto um dump V12 segue importável no esquema atual.
+			byte[] conteudo = sql.replace("-- esquema:14", "-- esquema:12")
+				.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
 			jdbcTemplate.update("UPDATE pacientes SET nome = 'Paciente alterado' WHERE id_paciente = ?", pacienteId);
 			var upload = new org.springframework.mock.web.MockMultipartFile("arquivo", "dados.sql",
@@ -166,7 +176,7 @@ class PostgreSqlFlywayIntegrationTests {
 		var checksum = new com.aclg.apecan.backup.service.ChecksumService();
 		var crypto = new com.aclg.apecan.backup.service.BackupCriptografiaService(props,
 			tools.jackson.databind.json.JsonMapper.builder().findAndAddModules().build(), checksum);
-		var manifesto = new com.aclg.apecan.backup.service.BackupManifest(1,"teste","10","18",
+		var manifesto = new com.aclg.apecan.backup.service.BackupManifest(1,"teste","14","18",
 			java.time.LocalDateTime.now(),"America/Sao_Paulo",
 			java.util.Map.of("database.dump",checksum.sha256(dump)),java.util.List.of("BANCO_POSTGRESQL"));
 		var arquivo = crypto.empacotar(dump,manifesto,"senha-ficticia-de-backup".toCharArray(),temporario);
@@ -183,7 +193,7 @@ class PostgreSqlFlywayIntegrationTests {
 			POSTGRES.getUsername(),POSTGRES.getPassword());
 		var restaurado=new JdbcTemplate(ds);
 		org.flywaydb.core.Flyway.configure().dataSource(ds).load().validate();
-		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success",Integer.class)).isEqualTo(12);
+		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success",Integer.class)).isEqualTo(14);
 		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM usuarios WHERE id_usuario=?",Integer.class,usuarioId)).isEqualTo(1);
 		assertThat(restaurado.queryForObject("SELECT COUNT(*) FROM emprestimos_equipamentos WHERE id_equipamento=?",
 			Integer.class,equipamentoId)).isEqualTo(1);

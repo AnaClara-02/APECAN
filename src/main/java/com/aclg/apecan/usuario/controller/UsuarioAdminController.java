@@ -6,6 +6,7 @@ import com.aclg.apecan.usuario.dto.AlterarAcessoForm;
 import com.aclg.apecan.usuario.dto.EditarUsuarioForm;
 import com.aclg.apecan.usuario.dto.NovoUsuarioForm;
 import com.aclg.apecan.usuario.dto.UsuarioCriadoResultado;
+import com.aclg.apecan.usuario.entity.TipoPerfil;
 import com.aclg.apecan.usuario.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -69,10 +70,33 @@ public class UsuarioAdminController {
     @GetMapping("/{id}")
     String detalhe(@PathVariable Long id, Model model) {
         model.addAttribute("usuario", usuarioService.buscar(id));
+        model.addAttribute("podeGerenciarUsuario", usuarioService.podeGerenciarUsuario(id));
+        model.addAttribute("perfisDisponiveis", usuarioService.perfisDisponiveis(id));
         if (!model.containsAttribute("alterarAcessoForm")) {
             model.addAttribute("alterarAcessoForm", new AlterarAcessoForm());
         }
         return "usuarios/detalhe";
+    }
+
+    @PostMapping("/{id}/perfil")
+    String alterarPerfil(
+            @PathVariable Long id,
+            @Valid @ModelAttribute AlterarAcessoForm formulario,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
+        TipoPerfil perfil = formulario.getNovoPerfil();
+        if (perfil == null) {
+            redirectAttributes.addFlashAttribute("erro", "Selecione o perfil de destino.");
+            return "redirect:/usuarios/" + id;
+        }
+        return executarAlteracao(
+            id,
+            formulario,
+            bindingResult,
+            dados -> usuarioService.alterarPerfil(id, perfil, dados),
+            "Perfil do usuário atualizado.",
+            redirectAttributes
+        );
     }
 
     @GetMapping("/{id}/editar")
@@ -107,16 +131,14 @@ public class UsuarioAdminController {
     }
 
     @PostMapping("/{id}/reenviar-ativacao")
-    String reemitir(@PathVariable Long id, Model model) {
+    String reemitir(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         try {
             AtivacaoEmitida ativacao = usuarioService.reemitirAtivacao(id);
             prepararEntregaAtivacao(usuarioService.buscar(id).nome(), ativacao, model);
             return "usuarios/ativacao-local";
         } catch (RegraNegocioException exception) {
-            model.addAttribute("erro", exception.getMessage());
-            model.addAttribute("usuario", usuarioService.buscar(id));
-            model.addAttribute("alterarAcessoForm", new AlterarAcessoForm());
-            return "usuarios/detalhe";
+            redirectAttributes.addFlashAttribute("erro", exception.getMessage());
+            return "redirect:/usuarios/" + id;
         }
     }
 

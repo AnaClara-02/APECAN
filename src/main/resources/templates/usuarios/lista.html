@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Usuários | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
@@ -39,7 +40,7 @@
             <tr th:each="usuario : ${usuarios}">
                 <td th:text="${usuario.nome}">Nome</td>
                 <td th:text="${usuario.login}">login</td>
-                <td><span class="status" th:text="${usuario.tipoPerfil}">USUÁRIO</span></td>
+                <td><span class="status" th:text="${usuario.rotuloPerfil()}">Usuário</span></td>
                 <td><span class="status" th:classappend="${usuario.estaAtivo()} ? ' status-sucesso'" th:text="${usuario.status}">ATIVO</span></td>
                 <td th:text="${usuario.primeiroAcessoPendente ? 'Pendente' : 'Concluída'}">Pendente</td>
                 <td><a th:href="@{/usuarios/{id}(id=${usuario.id})}">Consultar</a></td>

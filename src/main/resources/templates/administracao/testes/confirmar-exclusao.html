@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirmar exclusão | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina">
+        <div><p class="rotulo">Adm. Dev. · Exclusão de teste</p><h1>Confirmar exclusão</h1></div>
+        <a class="botao botao-secundario" th:href="${voltar}">Cancelar</a>
+    </section>
+    <article class="cartao">
+        <h2 th:text="|${previa.tipo.rotulo()} #${previa.id} · ${previa.nome}|">Registro</h2>
+        <p th:text="${previa.detalhes}">Detalhes</p>
+        <div class="alerta alerta-aviso" role="alert">
+            A exclusão é definitiva. Confira o registro e faça um backup antes de continuar.
+            Os dados criados depois do backup mais recente não poderão ser recuperados por ele.
+        </div>
+        <p><strong>Impacto:</strong> <span th:text="${previa.impacto}">Impacto da operação.</span></p>
+        <div class="alerta alerta-erro" role="alert" th:if="${!previa.podeExcluir}" th:text="${previa.bloqueio}"></div>
+        <form class="formulario" th:if="${previa.podeExcluir}"
+              th:action="@{/administracao/testes/exclusoes/{tipo}/{id}(tipo=${previa.tipo},id=${previa.id})}"
+              method="post">
+            <input type="hidden" name="voltar" th:value="${voltar}">
+            <button class="botao botao-perigo" type="submit">Confirmar</button>
+        </form>
+    </article>
+</main>
+</body>
+</html>

@@ -84,16 +84,16 @@ public class UsuarioService {
             );
         }
 
-        Usuario usuario = criarUsuario(formulario, TipoPerfil.ADMINISTRADOR, null);
+        Usuario usuario = criarUsuario(formulario, TipoPerfil.ADM_DEV, null);
         registrar(
             usuario,
             null,
             TipoEventoAdministracaoUsuario.CRIACAO,
             null,
-            TipoPerfil.ADMINISTRADOR,
+            TipoPerfil.ADM_DEV,
             null,
             StatusUsuario.ATIVO,
-            "Criacao do primeiro administrador."
+            "Criacao do primeiro Adm. Dev."
         );
         AtivacaoEmitida ativacao = ativacaoService.emitir(usuario);
         return new UsuarioCriadoResultado(usuarioMapper.paraResumo(usuario), ativacao);
@@ -136,13 +136,36 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public EditarUsuarioForm formularioEdicao(Long id) {
-        return usuarioMapper.paraFormularioEdicao(buscarEntidade(id));
+        Usuario responsavel = exigirAdministradorAtual();
+        Usuario alvo = buscarEntidade(id);
+        validarPodeGerenciar(responsavel, alvo);
+        return usuarioMapper.paraFormularioEdicao(alvo);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean podeGerenciarUsuario(Long id) {
+        Usuario responsavel = buscarEntidade(usuarioAtual.exigirId());
+        Usuario alvo = buscarEntidade(id);
+        return administradorAtivo(responsavel)
+            && (responsavel.getTipoPerfil() == TipoPerfil.ADM_DEV || alvo.getTipoPerfil() != TipoPerfil.ADM_DEV);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TipoPerfil> perfisDisponiveis(Long id) {
+        Usuario responsavel = exigirAdministradorAtual();
+        Usuario alvo = buscarEntidade(id);
+        if (alvo.getTipoPerfil() == TipoPerfil.ADM_DEV
+                && responsavel.getTipoPerfil() != TipoPerfil.ADM_DEV) return List.of();
+        return responsavel.getTipoPerfil() == TipoPerfil.ADM_DEV
+            ? List.of(TipoPerfil.values())
+            : List.of(TipoPerfil.ADMINISTRADOR, TipoPerfil.USUARIO);
     }
 
     @Transactional
     public void atualizar(Long id, @Valid EditarUsuarioForm formulario) {
-        exigirAdministradorAtual();
+        Usuario responsavel = exigirAdministradorAtual();
         Usuario usuario = buscarParaAtualizacao(id);
+        validarPodeGerenciar(responsavel, usuario);
 
         String login = normalizarLogin(formulario.getLogin());
         String email = normalizarEmail(formulario.getEmail());
@@ -177,6 +200,7 @@ public class UsuarioService {
     public AtivacaoEmitida reemitirAtivacao(Long id) {
         Usuario responsavel = exigirAdministradorAtual();
         Usuario usuario = buscarParaAtualizacao(id);
+        validarPodeGerenciar(responsavel, usuario);
         AtivacaoEmitida ativacao = ativacaoService.emitir(usuario);
         registrar(
             usuario,
@@ -193,68 +217,56 @@ public class UsuarioService {
 
     @Transactional
     public void promover(Long id, @Valid AlterarAcessoForm formulario) {
+        alterarPerfil(id, TipoPerfil.ADMINISTRADOR, formulario);
+    }
+
+    @Transactional
+    public void alterarPerfil(Long id, TipoPerfil novoPerfil, @Valid AlterarAcessoForm formulario) {
         ContextoAlteracao contexto = prepararAlteracao(id, formulario);
+        Usuario responsavel = contexto.responsavel();
         Usuario alvo = contexto.alvo();
-        if (alvo.getTipoPerfil() == TipoPerfil.ADMINISTRADOR) {
-            throw new OperacaoInvalidaException(
-                "USUARIO_JA_ADMINISTRADOR",
-                "O usuario ja possui perfil de administrador."
-            );
+        validarPodeGerenciar(responsavel, alvo);
+        if (novoPerfil == null || (novoPerfil == TipoPerfil.ADM_DEV
+                && responsavel.getTipoPerfil() != TipoPerfil.ADM_DEV)) {
+            throw new OperacaoInvalidaException("PERFIL_NAO_AUTORIZADO",
+                "Somente Adm. Dev. pode conceder esse perfil.");
+        }
+        if (novoPerfil == alvo.getTipoPerfil()) {
+            throw new OperacaoInvalidaException("PERFIL_JA_ATRIBUIDO", "A conta ja possui esse perfil.");
         }
         if (alvo.getStatus() != StatusUsuario.ATIVO || !alvo.estaAtivado()) {
-            throw new OperacaoInvalidaException(
-                "USUARIO_NAO_APTO_PARA_PROMOCAO",
-                "Ative a conta do usuario antes de promove-lo."
-            );
+            throw new OperacaoInvalidaException("USUARIO_NAO_APTO_PARA_PROMOCAO",
+                "Ative a conta antes de alterar seu perfil.");
         }
 
         TipoPerfil anterior = alvo.getTipoPerfil();
-        alvo.alterarPerfil(TipoPerfil.ADMINISTRADOR);
-        registrar(
-            alvo,
-            contexto.responsavel(),
-            TipoEventoAdministracaoUsuario.PROMOCAO_ADMINISTRADOR,
-            anterior,
-            TipoPerfil.ADMINISTRADOR,
-            alvo.getStatus(),
-            alvo.getStatus(),
-            contexto.justificativa()
-        );
+        if (anterior == TipoPerfil.ADM_DEV) impedirRemocaoUltimoAdmDev(contexto.administradores(), alvo);
+        if (administrativo(anterior) && !administrativo(novoPerfil))
+            impedirRemocaoUltimoAdministrador(contexto.administradores(), alvo);
+
+        alvo.alterarPerfil(novoPerfil);
+        TipoEventoAdministracaoUsuario evento = novoPerfil == TipoPerfil.ADMINISTRADOR
+                && anterior == TipoPerfil.USUARIO
+            ? TipoEventoAdministracaoUsuario.PROMOCAO_ADMINISTRADOR
+            : novoPerfil == TipoPerfil.USUARIO && administrativo(anterior)
+                ? TipoEventoAdministracaoUsuario.REBAIXAMENTO_USUARIO
+                : TipoEventoAdministracaoUsuario.ALTERACAO_PERFIL;
+        registrar(alvo, responsavel, evento, anterior, novoPerfil, alvo.getStatus(), alvo.getStatus(),
+            contexto.justificativa());
         usuarioRepository.flush();
         sessaoUsuarioService.encerrarSessoes(alvo.getId());
     }
 
     @Transactional
     public void rebaixar(Long id, @Valid AlterarAcessoForm formulario) {
-        ContextoAlteracao contexto = prepararAlteracao(id, formulario);
-        Usuario alvo = contexto.alvo();
-        if (alvo.getTipoPerfil() != TipoPerfil.ADMINISTRADOR) {
-            throw new OperacaoInvalidaException(
-                "USUARIO_NAO_ADMINISTRADOR",
-                "O usuario nao possui perfil de administrador."
-            );
-        }
-        impedirRemocaoUltimoAdministrador(contexto.administradores(), alvo);
-
-        alvo.alterarPerfil(TipoPerfil.USUARIO);
-        registrar(
-            alvo,
-            contexto.responsavel(),
-            TipoEventoAdministracaoUsuario.REBAIXAMENTO_USUARIO,
-            TipoPerfil.ADMINISTRADOR,
-            TipoPerfil.USUARIO,
-            alvo.getStatus(),
-            alvo.getStatus(),
-            contexto.justificativa()
-        );
-        usuarioRepository.flush();
-        sessaoUsuarioService.encerrarSessoes(alvo.getId());
+        alterarPerfil(id, TipoPerfil.USUARIO, formulario);
     }
 
     @Transactional
     public void desativar(Long id, @Valid AlterarAcessoForm formulario) {
         ContextoAlteracao contexto = prepararAlteracao(id, formulario);
         Usuario alvo = contexto.alvo();
+        validarPodeGerenciar(contexto.responsavel(), alvo);
         if (alvo.getId().equals(contexto.responsavel().getId())) {
             throw new OperacaoInvalidaException(
                 "AUTODESATIVACAO_NAO_PERMITIDA",
@@ -268,6 +280,10 @@ public class UsuarioService {
             );
         }
         if (alvo.getTipoPerfil() == TipoPerfil.ADMINISTRADOR) {
+            impedirRemocaoUltimoAdministrador(contexto.administradores(), alvo);
+        }
+        if (alvo.getTipoPerfil() == TipoPerfil.ADM_DEV) {
+            impedirRemocaoUltimoAdmDev(contexto.administradores(), alvo);
             impedirRemocaoUltimoAdministrador(contexto.administradores(), alvo);
         }
 
@@ -291,6 +307,7 @@ public class UsuarioService {
     public void reativar(Long id, @Valid AlterarAcessoForm formulario) {
         ContextoAlteracao contexto = prepararAlteracao(id, formulario);
         Usuario alvo = contexto.alvo();
+        validarPodeGerenciar(contexto.responsavel(), alvo);
         if (alvo.getStatus() == StatusUsuario.ATIVO) {
             throw new OperacaoInvalidaException(
                 "USUARIO_JA_ATIVO",
@@ -312,6 +329,7 @@ public class UsuarioService {
             contexto.justificativa()
         );
         usuarioRepository.flush();
+        sessaoUsuarioService.encerrarSessoes(alvo.getId());
     }
 
     @Transactional(readOnly = true)
@@ -391,9 +409,21 @@ public class UsuarioService {
     }
 
     private boolean administradorAtivo(Usuario usuario) {
-        return usuario.getTipoPerfil() == TipoPerfil.ADMINISTRADOR
+        return administrativo(usuario.getTipoPerfil())
             && usuario.getStatus() == StatusUsuario.ATIVO
             && usuario.estaAtivado();
+    }
+
+    private boolean administrativo(TipoPerfil perfil) {
+        return perfil == TipoPerfil.ADMINISTRADOR || perfil == TipoPerfil.ADM_DEV;
+    }
+
+    private void validarPodeGerenciar(Usuario responsavel, Usuario alvo) {
+        if (alvo.getTipoPerfil() == TipoPerfil.ADM_DEV
+                && responsavel.getTipoPerfil() != TipoPerfil.ADM_DEV) {
+            throw new OperacaoInvalidaException("PERFIL_NAO_AUTORIZADO",
+                "Somente Adm. Dev. pode gerenciar contas desse perfil.");
+        }
     }
 
     private void validarSenhaAtual(Usuario responsavel, String senhaAtual) {
@@ -409,6 +439,17 @@ public class UsuarioService {
                 "ULTIMO_ADMINISTRADOR",
                 "Nao e permitido remover o ultimo administrador ativo."
             );
+        }
+    }
+
+    private void impedirRemocaoUltimoAdmDev(List<Usuario> administradores, Usuario alvo) {
+        long ativos = administradores.stream()
+            .filter(this::administradorAtivo)
+            .filter(usuario -> usuario.getTipoPerfil() == TipoPerfil.ADM_DEV)
+            .count();
+        if (alvo.getTipoPerfil() == TipoPerfil.ADM_DEV && administradorAtivo(alvo) && ativos <= 1) {
+            throw new OperacaoInvalidaException("ULTIMO_ADM_DEV",
+                "Nao e permitido remover o ultimo Adm. Dev. ativo.");
         }
     }
 
@@ -499,7 +540,7 @@ public class UsuarioService {
                 "A reemissão inicial exige uma única conta pendente.");
         }
         Usuario usuario = usuarioRepository.findAll().getFirst();
-        if (usuario.getTipoPerfil() != TipoPerfil.ADMINISTRADOR || usuario.estaAtivado()
+        if (usuario.getTipoPerfil() != TipoPerfil.ADM_DEV || usuario.estaAtivado()
                 || usuario.getStatus() != StatusUsuario.ATIVO) {
             throw new OperacaoInvalidaException("CONFIGURACAO_INICIAL_CONCLUIDA",
                 "A configuração inicial já foi concluída.");

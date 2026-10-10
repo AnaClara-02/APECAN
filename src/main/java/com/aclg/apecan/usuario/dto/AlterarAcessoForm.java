@@ -1,5 +1,6 @@
 package com.aclg.apecan.usuario.dto;
 
+import com.aclg.apecan.usuario.entity.TipoPerfil;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -16,8 +17,12 @@ public class AlterarAcessoForm {
     )
     private String justificativa;
 
+    private TipoPerfil novoPerfil;
+
     public String getSenhaAtual() { return senhaAtual; }
     public void setSenhaAtual(String senhaAtual) { this.senhaAtual = senhaAtual; }
     public String getJustificativa() { return justificativa; }
     public void setJustificativa(String justificativa) { this.justificativa = justificativa; }
+    public TipoPerfil getNovoPerfil() { return novoPerfil; }
+    public void setNovoPerfil(TipoPerfil novoPerfil) { this.novoPerfil = novoPerfil; }
 }

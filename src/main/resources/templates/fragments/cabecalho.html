@@ -69,7 +69,7 @@
         <div class="cabecalho-contexto"><span class="cabecalho-sistema">Sistema integrado</span></div>
         <div class="usuario-cabecalho" th:if="${usuarioLogado != null}">
             <span class="usuario-avatar" th:text="${#strings.substring(usuarioLogado.nome(), 0, 1)}">A</span>
-            <span class="usuario-identificacao"><strong th:text="${usuarioLogado.nome()}">Usuário</strong><small th:text="${usuarioLogado.administrador() ? 'Administrador' : 'Usuário'}">Perfil</small></span>
+            <span class="usuario-identificacao"><strong th:text="${usuarioLogado.nome()}">Usuário</strong><small th:text="${usuarioLogado.nomePerfil()}">Perfil</small></span>
         </div>
     </header>
     <script defer th:src="@{/js/app.js}"></script>

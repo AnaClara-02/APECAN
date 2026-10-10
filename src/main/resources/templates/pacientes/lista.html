@@ -6,6 +6,7 @@
     <title>Pacientes | APECAN</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script defer th:src="@{/js/cpf-mask.js}"></script>
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
 </head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
@@ -34,12 +35,12 @@
         <table>
             <thead><tr><th>Nome</th><th>CPF</th><th>Tratamento</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
             <tbody>
-            <tr th:each="paciente : ${pagina.content}">
+            <tr th:each="paciente : ${pagina.content}" th:with="voltarUrl=@{/pacientes(pagina=${pagina.number},nome=${nome},cpf=${cpf},status=${statusSelecionado},todos=${todosStatus})}">
                 <td th:text="${paciente.nome}">Nome</td>
                 <td th:text="${paciente.cpfMascarado}">CPF</td>
                 <td th:text="${paciente.localTratamento}">Local</td>
                 <td><span class="status" th:classappend="${paciente.status.name() == 'ATIVO'} ? ' status-sucesso'" th:text="${paciente.status}">ATIVO</span></td>
-                <td><a th:href="@{/pacientes/{id}(id=${paciente.id})}">Consultar</a></td>
+                <td><a th:href="@{/pacientes/{id}(id=${paciente.id})}">Consultar</a><a th:if="${usuarioLogado.admDev()}" th:href="@{/administracao/testes/exclusoes/PACIENTE/{id}(id=${paciente.id},voltar=${voltarUrl})}">Excluir teste</a></td>
             </tr>
             </tbody>
         </table>

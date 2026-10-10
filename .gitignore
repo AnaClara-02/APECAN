@@ -56,3 +56,6 @@ application-secrets.*
 /storage/
 /backups/
 /dumps/
+
+### Documentos internos de auditoria de segurança ###
+/docs/security-audit/

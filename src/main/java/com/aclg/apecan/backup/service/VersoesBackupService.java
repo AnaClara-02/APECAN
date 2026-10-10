@@ -57,7 +57,7 @@ public class VersoesBackupService {
 	public int maiorVersaoDisponivel() {
 		Flyway flyway = flywayProvider.getIfAvailable();
 		if (flyway == null) {
-			return 12;
+			return 14;
 		}
 		return Arrays.stream(flyway.info().all())
 			.map(MigrationInfo::getVersion)
@@ -65,7 +65,7 @@ public class VersoesBackupService {
 			.map(versao -> versao.getVersion())
 			.map(VersoesBackupService::inteiro)
 			.max(Comparator.naturalOrder())
-			.orElse(12);
+			.orElse(14);
 	}
 
 	private static int inteiro(String versao) {

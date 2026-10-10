@@ -37,7 +37,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
 			select u from Usuario u
-			where u.tipoPerfil = com.aclg.apecan.usuario.entity.TipoPerfil.ADMINISTRADOR
+			where u.tipoPerfil in (com.aclg.apecan.usuario.entity.TipoPerfil.ADM_DEV,
+				com.aclg.apecan.usuario.entity.TipoPerfil.ADMINISTRADOR)
 			order by u.id
 			""")
 	List<Usuario> findAdministradoresForUpdate();

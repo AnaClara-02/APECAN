@@ -182,3 +182,46 @@ o transporte SQL dos dados operacionais sem transportar contas.
 A V12 invalida uma única vez os links pendentes emitidos antes da correção A01.
 Após a atualização, reenvie convites de ativação necessários; quem precisar
 recuperar a senha deve solicitar um novo link. Senhas e cadastros são preservados.
+
+## Perfis administrativos e exclusões de teste
+
+As migrações V13 e V14 adicionam o perfil **Adm. Dev.** e a auditoria de
+exclusões operacionais. Ao aplicar V13, contas que eram `ADMINISTRADOR` passam
+a `ADM_DEV`, preservando ID, senha, status e vínculos. A conversão é anotada no
+histórico com responsável técnico nulo; nenhum novo usuário é criado. O perfil
+**Administrador** continua disponível para promoção posterior.
+
+| Perfil | Acesso |
+|---|---|
+| Adm. Dev. | Administração atual, gestão dos três perfis e exclusões operacionais de teste |
+| Administrador | Administração atual de contas Administrador/Usuário; não gerencia Adm. Dev. |
+| Usuário | Operações atuais e exportação/importação de backup |
+
+Todos os perfis administrativos precisam usar contas individuais. A tela de
+usuários permite alterar o perfil apenas com senha atual, justificativa e conta
+ativa e ativada. Não se pode desativar a própria conta, remover o último
+administrador ativo nem o último Adm. Dev. ativo e ativado. A configuração
+inicial local cria um Adm. Dev. pendente, sem senha padrão; a hospedagem Render
+continua proibindo o modo de bootstrap.
+
+Somente Adm. Dev. vê a ação **Excluir teste** para registros operacionais. A
+confirmação exige senha, justificativa e a palavra `EXCLUIR`, apresenta os
+vínculos e o impacto, e grava tipo, ID, responsável, horário e quantidade na
+tabela `auditoria_exclusoes_teste`. A exclusão é definitiva e não deve ser usada
+em dados reais de atendimento. Faça e confira um backup antes dos testes.
+
+Pacientes com empréstimos, voluntários associados a doações, equipamentos com
+histórico de empréstimos, categorias com unidades e doações de equipamentos com
+unidades ficam bloqueados até que suas dependências sejam resolvidas. Excluir
+empréstimo aberto libera o equipamento como ATIVO sem inventar devolução;
+doação monetária e despesa removem sua movimentação correspondente na mesma
+transação. Movimentação ligada a uma origem deve ser removida pela doação ou
+despesa. Categorias vazias mantêm a ação já existente para os demais perfis.
+
+O backup SQL operacional continua transportando somente os dados operacionais
+permitidos. Ele não leva contas, hashes de senha, tokens, permissões nem as
+auditorias administrativas, de backup, exportação ou exclusão. V13 e V14 são
+migrações novas: faça backup do banco antes de publicar a versão que as aplica,
+homologue a conversão de perfis e confirme a presença das duas migrações no
+ambiente de destino. A implementação local não aplicou migrações nem alterou o
+banco hospedado.

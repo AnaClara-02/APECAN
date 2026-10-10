@@ -288,3 +288,27 @@ Ler este arquivo e o README; conferir `git status`, histórico e código antes d
 alterar. Não tomar planos antigos como funcionalidades comprovadas. Preservar
 migrações aplicadas e mudanças locais, não ler/expor credenciais sem necessidade,
 não usar dados reais em testes e registrar resultados efetivamente executados.
+
+### Perfis e exclusões operacionais — 10/10/2026
+
+- A V13 amplia os perfis para `ADM_DEV`, `ADMINISTRADOR` e `USUARIO` e converte
+  contas `ADMINISTRADOR` existentes em `ADM_DEV`, preservando suas credenciais e
+  demais dados. O evento da conversão é histórico e não atribuído a uma pessoa.
+- A V14 cria `auditoria_exclusoes_teste`; cada evento registra responsável,
+  registro-alvo (tipo e ID), justificativa, quantidade removida e data/hora.
+- Adm. Dev. mantém as permissões administrativas, gerencia todos os perfis e
+  pode excluir certos registros operacionais de teste. Administrador não pode
+  gerenciar contas Adm. Dev. Usuário mantém operações e acesso a backups.
+- O último Adm. Dev. ativo/ativado e o último administrador ativo são
+  protegidos. Alterar perfil/status exige senha atual e justificativa; contas
+  alteradas perdem as sessões existentes.
+- A exclusão operacional tem confirmação por tela e POST com CSRF; não remove
+  contas, tokens ou auditorias. Bloqueia exclusões com dependências, e transações
+  unem registros inseparáveis (como doação monetária/movimentação e
+  despesa/movimentação). É irreversível e não deve ser usada com dados reais.
+- O backup SQL segue sua lista operacional explícita e não exporta usuários nem
+  a nova auditoria. Backups anteriores de dados operacionais permanecem
+  versionados por seu cabeçalho e podem ser importados sem substituir contas.
+- A implementação não executou migrações nem mudou a base Neon/Render, não criou
+  contas e não fez commit, push ou deploy. Antes de publicar, gerar backup,
+  revisar a conversão das contas existentes e homologar em dados fictícios.

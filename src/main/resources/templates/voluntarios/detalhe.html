@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Voluntário | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Voluntário | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}">    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+</head>
 <body><header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
 <main id="conteudo-principal" class="conteudo"><div th:replace="~{fragments/cabecalho :: mensagens}"></div>
-    <section class="cabecalho-pagina"><div><p class="rotulo">Voluntário</p><h1 th:text="${voluntario.nome}"></h1><span class="status" th:classappend="${voluntario.status.name() == 'ATIVO'} ? ' status-sucesso'" th:text="${voluntario.status}"></span></div><div class="acoes"><a class="botao botao-secundario" th:href="@{/voluntarios}">Voltar</a><a class="botao botao-primario" th:href="@{/voluntarios/{id}/editar(id=${voluntario.id})}">Editar dados</a></div></section>
+    <section class="cabecalho-pagina"><div><p class="rotulo">Voluntário</p><h1 th:text="${voluntario.nome}"></h1><span class="status" th:classappend="${voluntario.status.name() == 'ATIVO'} ? ' status-sucesso'" th:text="${voluntario.status}"></span></div><div class="acoes"><a class="botao botao-secundario" th:href="@{/voluntarios}">Voltar</a><a class="botao botao-primario" th:href="@{/voluntarios/{id}/editar(id=${voluntario.id})}">Editar dados</a><a class="botao botao-perigo" th:if="${usuarioLogado.admDev()}" th:href="@{/administracao/testes/exclusoes/VOLUNTARIO/{id}(id=${voluntario.id})}">Excluir registro de teste</a></div></section>
     <section class="cartao dados"><h2>Dados cadastrais</h2><dl><dt>CPF</dt><dd th:text="${voluntario.cpfMascarado}"></dd><dt>Telefone</dt><dd th:text="${voluntario.telefone}"></dd><dt>Endereço</dt><dd th:text="${voluntario.endereco}"></dd></dl></section>
     <form class="acoes" th:action="@{/voluntarios/{id}/status(id=${voluntario.id})}" method="post"><button class="botao" th:classappend="${voluntario.status.name() == 'ATIVO'} ? ' botao-perigo' : ' botao-secundario'" type="submit" th:text="${voluntario.status.name() == 'ATIVO' ? 'Inativar voluntário' : 'Reativar voluntário'}"></button></form>
 </main></body></html>

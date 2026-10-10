@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Voluntários | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Voluntários | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}">    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+</head>
 <body>
 <header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
 <main id="conteudo-principal" class="conteudo">
@@ -14,7 +15,7 @@
     </form>
     <div class="cartao tabela-responsiva" tabindex="0" aria-label="Lista de voluntários">
         <table><thead><tr><th>Nome</th><th>CPF</th><th>Status</th><th><span class="sr-only">Ações</span></th></tr></thead>
-        <tbody><tr th:each="v : ${pagina.content}"><td th:text="${v.nome}"></td><td th:text="${v.cpfMascarado}"></td><td><span class="status" th:classappend="${v.status.name() == 'ATIVO'} ? ' status-sucesso'" th:text="${v.status}"></span></td><td><a th:href="@{/voluntarios/{id}(id=${v.id})}">Consultar</a></td></tr><tr th:if="${pagina.empty}"><td colspan="4">Nenhum voluntário encontrado com esses filtros.</td></tr></tbody></table>
+        <tbody><tr th:each="v : ${pagina.content}" th:with="voltarUrl=@{/voluntarios(pagina=${pagina.number},nome=${nome},status=${statusSelecionado},todos=${todosStatus})}"><td th:text="${v.nome}"></td><td th:text="${v.cpfMascarado}"></td><td><span class="status" th:classappend="${v.status.name() == 'ATIVO'} ? ' status-sucesso'" th:text="${v.status}"></span></td><td><a th:href="@{/voluntarios/{id}(id=${v.id})}">Consultar</a><a th:if="${usuarioLogado.admDev()}" th:href="@{/administracao/testes/exclusoes/VOLUNTARIO/{id}(id=${v.id},voltar=${voltarUrl})}">Excluir teste</a></td></tr><tr th:if="${pagina.empty}"><td colspan="4">Nenhum voluntário encontrado com esses filtros.</td></tr></tbody></table>
     </div>
     <nav class="paginacao" aria-label="Paginação" th:if="${pagina.totalPages > 1}"><a class="botao botao-secundario" th:if="${pagina.hasPrevious()}" th:href="@{/voluntarios(pagina=${pagina.number - 1},nome=${nome},status=${statusSelecionado},todos=${todosStatus})}">Anterior</a><span th:text="|Página ${pagina.number + 1} de ${pagina.totalPages}|"></span><a class="botao botao-secundario" th:if="${pagina.hasNext()}" th:href="@{/voluntarios(pagina=${pagina.number + 1},nome=${nome},status=${statusSelecionado},todos=${todosStatus})}">Próxima</a></nav>
 </main></body></html>

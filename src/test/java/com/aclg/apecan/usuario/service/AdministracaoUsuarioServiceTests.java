@@ -76,6 +76,8 @@ class AdministracaoUsuarioServiceTests {
         AlterarAcessoForm confirmacaoInicial = confirmacao(SENHA_ADMIN, "Sucessao administrativa planejada.");
         usuarioService.promover(segundo.getId(), confirmacaoInicial);
         assertThat(segundo.getTipoPerfil()).isEqualTo(TipoPerfil.ADMINISTRADOR);
+        usuarioService.alterarPerfil(segundo.getId(), TipoPerfil.ADM_DEV,
+            confirmacao(SENHA_ADMIN, "Sucessor técnico habilitado antes da transferência."));
 
         UsuarioPrincipal principalInicial = UsuarioPrincipal.de(adminInicial);
         sessionRegistry.registerNewSession("sessao-admin-inicial", principalInicial);
@@ -88,6 +90,7 @@ class AdministracaoUsuarioServiceTests {
         // A transação do teste ainda está aberta; a revogação só ocorre após commit.
         assertThat(sessao.isExpired()).isFalse();
         assertThat(adminInicial.getTipoPerfil()).isEqualTo(TipoPerfil.USUARIO);
+        assertThat(segundo.getTipoPerfil()).isEqualTo(TipoPerfil.ADM_DEV);
 
         autenticar(segundo);
         assertThatThrownBy(() -> usuarioService.rebaixar(
@@ -95,7 +98,7 @@ class AdministracaoUsuarioServiceTests {
             confirmacao(SENHA_SEGUNDO, "Tentativa de remover o ultimo administrador.")
         ))
             .isInstanceOf(OperacaoInvalidaException.class)
-            .hasMessageContaining("ultimo administrador");
+            .hasMessageContaining("ultimo");
 
         assertThat(historicoRepository.findAll()).extracting("tipoEvento")
             .contains(
@@ -135,6 +138,24 @@ class AdministracaoUsuarioServiceTests {
         assertThat(primeiro.getStatus()).isEqualTo(StatusUsuario.ATIVO);
         assertThat(historicoRepository.findAll()).extracting("tipoEvento")
             .contains(TipoEventoAdministracaoUsuario.DESATIVACAO);
+    }
+
+    @Test
+    void administradorNaoPodeGerenciarPerfilAdmDev() {
+        Usuario admDev = criarEAtivarPrimeiroAdministrador();
+        autenticar(admDev);
+        UsuarioCriadoResultado resultado = usuarioService.cadastrar(formularioSegundo());
+        ativacaoService.ativar(extrairToken(resultado.ativacao().linkLocal()), SENHA_SEGUNDO, SENHA_SEGUNDO);
+        Usuario administrador = usuarioRepository.findByLogin("segundo.admin").orElseThrow();
+        usuarioService.promover(administrador.getId(), confirmacao(SENHA_ADMIN, "Promocao para administrador."));
+
+        autenticar(administrador);
+        assertThat(usuarioService.podeGerenciarUsuario(admDev.getId())).isFalse();
+        assertThatThrownBy(() -> usuarioService.alterarPerfil(admDev.getId(), TipoPerfil.USUARIO,
+            confirmacao(SENHA_SEGUNDO, "Tentativa de rebaixar Adm. Dev.")))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("Somente Adm. Dev.");
+        assertThat(admDev.getTipoPerfil()).isEqualTo(TipoPerfil.ADM_DEV);
     }
 
     @Test

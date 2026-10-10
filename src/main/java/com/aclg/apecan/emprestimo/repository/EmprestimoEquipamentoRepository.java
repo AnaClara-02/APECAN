@@ -15,6 +15,9 @@ public interface EmprestimoEquipamentoRepository extends JpaRepository<Emprestim
 	@Query("select e from EmprestimoEquipamento e where e.id=:id")
 	Optional<EmprestimoEquipamento> findByIdForUpdate(@Param("id") Long id);
 
+	@Query("select e.equipamento.id from EmprestimoEquipamento e where e.id = :id")
+	Optional<Long> findEquipamentoIdById(@Param("id") Long id);
+
 	boolean existsByEquipamentoIdAndDataDevolucaoIsNull(Long equipamentoId);
 
 	@EntityGraph(attributePaths = { "equipamento", "equipamento.categoria", "paciente" })

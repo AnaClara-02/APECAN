@@ -14,6 +14,10 @@ public record UsuarioResumoDto(
     StatusUsuario status,
     boolean primeiroAcessoPendente
 ) {
+    public String rotuloPerfil() {
+        return tipoPerfil.rotulo();
+    }
+
     public boolean estaAtivo() {
         return status == StatusUsuario.ATIVO;
     }

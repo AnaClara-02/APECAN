@@ -1,0 +1,6 @@
+<a th:fragment="botao(tipo, id, voltar)"
+   class="botao botao-perigo"
+   th:if="${usuarioLogado != null and usuarioLogado.admDev()}"
+   th:href="@{/administracao/testes/exclusoes/{tipo}/{id}(tipo=${tipo},id=${id},voltar=${voltar})}">
+    Excluir teste
+</a>
