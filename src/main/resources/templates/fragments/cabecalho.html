@@ -47,15 +47,6 @@
                     <svg aria-hidden="true"><use th:href="@{/images/icons.svg#usuarios}"></use></svg><span>Usuários</span>
                 </a>
             </th:block>
-            <th:block th:if="${usuarioLogado != null}">
-                <p class="grupo-menu">Backup</p>
-                <a class="item-menu" th:href="@{/administracao/backups/exportacao}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups/exportacao')} ? 'page' : null">
-                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Exportação</span>
-                </a>
-                <a class="item-menu" th:href="@{/administracao/backups/importacao}" th:classappend="${#strings.startsWith(caminhoAtual, '/administracao/backups/importacao')} ? ' ativo'" th:attr="aria-current=${#strings.startsWith(caminhoAtual, '/administracao/backups/importacao')} ? 'page' : null">
-                    <svg aria-hidden="true"><use th:href="@{/images/icons.svg#relatorios}"></use></svg><span>Importação</span>
-                </a>
-            </th:block>
         </nav>
         <div class="rodape-menu">
             <a class="item-menu" th:href="@{/minha-conta/senha}" th:classappend="${#strings.startsWith(caminhoAtual, '/minha-conta')} ? ' ativo'">

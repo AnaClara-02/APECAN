@@ -1,6 +1,5 @@
 package com.aclg.apecan.auth.security;
 
-import com.aclg.apecan.backup.service.RecuperacaoDisponibilidadeService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -10,7 +9,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,26 +39,23 @@ public class SecurityConfig {
 	@Bean
 	@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 	SecurityFilterChain securityFilterChain(HttpSecurity http, ApiAuthenticationEntryPoint apiAuthenticationEntryPoint,
-			ApiAccessDeniedHandler apiAccessDeniedHandler, SessionRegistry sessionRegistry,
-			RecuperacaoDisponibilidadeService recuperacaoDisponibilidade) throws Exception {
+			ApiAccessDeniedHandler apiAccessDeniedHandler, SessionRegistry sessionRegistry) throws Exception {
 		RequestMatcher requisicaoApi = request -> {
 			String caminho = request.getRequestURI().substring(request.getContextPath().length());
 			return caminho.equals("/api") || caminho.startsWith("/api/");
 		};
-		RequestMatcher requisicaoRecuperacao = request -> {
+		RequestMatcher recursoRemovido = request -> {
 			String caminho = request.getRequestURI().substring(request.getContextPath().length());
-			return caminho.equals("/recuperacao") || caminho.startsWith("/recuperacao/");
+			return caminho.equals("/recuperacao") || caminho.startsWith("/recuperacao/")
+				|| caminho.equals("/administracao/backups") || caminho.startsWith("/administracao/backups/");
 		};
 
 		http.authorizeHttpRequests(autorizacao -> autorizacao
-			.requestMatchers("/recuperacao", "/recuperacao/**")
-			.access((authentication, context) -> new AuthorizationDecision(
-				recuperacaoDisponibilidade.permitida(context.getRequest())))
+			.requestMatchers("/recuperacao", "/recuperacao/**", "/administracao/backups", "/administracao/backups/**")
+			.denyAll()
 			.requestMatchers("/login", "/ativar-conta", "/esqueci-senha", "/redefinir-senha", "/error", "/error/**",
 					"/css/**", "/js/**", "/images/**", "/fonts/**", "/actuator/health", "/actuator/health/**")
 			.permitAll()
-			.requestMatchers("/administracao/backups", "/administracao/backups/**")
-			.hasAnyRole("ADM_DEV", "ADMINISTRADOR", "USUARIO")
 			.requestMatchers("/administracao/testes/**")
 			.hasRole("ADM_DEV")
 			.requestMatchers("/usuarios/**", "/configuracoes/**", "/administracao/**", "/api/usuarios/**", "/api/configuracoes/**",
@@ -90,7 +85,7 @@ public class SecurityConfig {
 			.exceptionHandling(
 					excecoes -> excecoes.defaultAuthenticationEntryPointFor(apiAuthenticationEntryPoint, requisicaoApi)
 						.defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.FORBIDDEN),
-								requisicaoRecuperacao)
+								recursoRemovido)
 						.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
 								AnyRequestMatcher.INSTANCE)
 						.defaultAccessDeniedHandlerFor(apiAccessDeniedHandler, requisicaoApi))

@@ -70,49 +70,36 @@ class SecurityConfigTests {
 			.andExpect(status().isForbidden());
     }
 
-	@Test
-	void backupDevePermitirAmbosOsPerfisEExigirCsrf() throws Exception {
-		for (String perfil : new String[]{"ADM_DEV", "ADMINISTRADOR", "USUARIO"}) {
-			for (String pagina : new String[]{"", "/exportacao", "/importacao"}) {
-				mockMvc.perform(get("/administracao/backups" + pagina).with(user("conta").roles(perfil)))
-					.andExpect(status().isOk());
-			}
-			for (String operacao : new String[]{"/exportacao", "/importacao/analisar", "/importacao/confirmar", "/importacao/cancelar"}) {
-				mockMvc.perform(post("/administracao/backups" + operacao).with(user("conta").roles(perfil)))
-					.andExpect(status().isForbidden());
-			}
-		}
-		mockMvc.perform(get("/administracao/backups/importacao"))
-			.andExpect(status().isFound())
-			.andExpect(redirectedUrl("/login"));
-	}
 
-	@Test
-	void painelDeBackupDeveExigirSenhaAtual() throws Exception {
-		for (String perfil : new String[]{"ADM_DEV", "ADMINISTRADOR", "USUARIO"}) {
-			mockMvc.perform(post("/administracao/backups/exportacao")
-					.with(user("conta").roles(perfil))
-					.with(csrf()))
-				.andExpect(status().isOk())
-				.andExpect(model().attributeHasFieldErrors("exportarBackupSqlForm", "senhaAtual"));
-		}
-	}
+    @Test
+    void rotasRemovidasDeBackupDevemSerBloqueadasParaTodosOsPerfis() throws Exception {
+        String[] rotas = {"/administracao/backups", "/administracao/backups/exportacao",
+            "/administracao/backups/importacao", "/administracao/backups/importacao/analisar",
+            "/administracao/backups/importacao/confirmar", "/administracao/backups/importacao/cancelar",
+            "/recuperacao", "/recuperacao/concluida"};
+        for (String rota : rotas) {
+            mockMvc.perform(get(rota)).andExpect(status().isForbidden());
+            mockMvc.perform(post(rota).with(csrf())).andExpect(status().isForbidden());
+            for (String perfil : new String[]{"ADM_DEV", "ADMINISTRADOR", "USUARIO"}) {
+                mockMvc.perform(get(rota).with(user("conta").roles(perfil)))
+                    .andExpect(status().isForbidden());
+                mockMvc.perform(post(rota).with(user("conta").roles(perfil)).with(csrf()))
+                    .andExpect(status().isForbidden());
+            }
+        }
+    }
 
-	@Test
-	void usuarioComumDevePoderAnalisarImportacaoComCsrf() throws Exception {
-		mockMvc.perform(post("/administracao/backups/importacao/analisar")
-				.with(user("comum").roles("USUARIO")).with(csrf()))
-			.andExpect(status().isOk())
-			.andExpect(model().attributeHasFieldErrors("importarBackupSqlForm", "arquivo"));
-	}
-
-	@Test
-	void recuperacaoRemotaDeveSerNegadaAntesDoUpload() throws Exception {
-		mockMvc.perform(get("/recuperacao").with(request -> {
-			request.setRemoteAddr("192.168.1.25");
-			return request;
-		})).andExpect(status().isForbidden());
-	}
+    @Test
+    void loginDevePermanecerPublicoSemRestauracaoDeBackup() throws Exception {
+        mockMvc.perform(get("/login")).andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("/esqueci-senha")))
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("Restaurar backup"))));
+        assertThat(java.util.Arrays.stream(applicationContext.getBeanDefinitionNames())
+            .map(applicationContext::getType)
+            .filter(java.util.Objects::nonNull)
+            .map(Class::getName)).noneMatch(nome -> nome.startsWith("com.aclg.apecan.backup."));
+    }
 
     @Test
 	void postSemCsrfDeveSerRejeitado() throws Exception {

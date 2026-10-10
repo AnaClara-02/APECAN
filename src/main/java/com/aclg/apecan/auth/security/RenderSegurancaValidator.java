@@ -24,8 +24,7 @@ public class RenderSegurancaValidator implements org.springframework.beans.facto
     }
     public void afterPropertiesSet() {
         if (!env.acceptsProfiles(Profiles.of("prod")) ||
-                env.acceptsProfiles(Profiles.of("bootstrap-admin", "recovery")) ||
-                env.getProperty("apecan.recovery.enabled", Boolean.class, false)) {
+                env.acceptsProfiles(Profiles.of("bootstrap-admin", "recovery"))) {
             throw new IllegalStateException("Render exige prod e proibe bootstrap/recuperacao.");
         }
         validarUrl(env.getRequiredProperty("spring.datasource.url"));

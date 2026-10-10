@@ -176,8 +176,8 @@ class AdministracaoUsuarioServiceTests {
 
         String menuComum = mvc.perform(get("/inicio").with(user(UsuarioPrincipal.de(segundo))))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(menuComum).contains("/administracao/backups/exportacao", "/administracao/backups/importacao")
-            .doesNotContain("href=\"/usuarios\"");
+        assertThat(menuComum).contains("href=\"/pacientes\"", "href=\"/relatorios\"")
+            .doesNotContain("/administracao/backups", "href=\"/usuarios\"");
     }
 
     private Usuario criarEAtivarPrimeiroAdministrador() {

@@ -132,7 +132,6 @@ main.conteudo.cartao { width: auto; max-width: 780px; margin-top: clamp(1.5rem, 
 .cartao { padding: clamp(1.15rem, 2vw, 1.6rem); border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); box-shadow: var(--sombra); }
 .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
 .grade-cartoes + .cartao, .cartao + .grade-cartoes { margin-top: 1rem; }
-.comparacao-backup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .secao { margin-top: 1.25rem; }
 .acoes { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-top: 1rem; }
 .cabecalho-pagina .acoes { justify-content: flex-end; margin-top: 0; }
@@ -271,7 +270,7 @@ td a { font-weight: 800; }
     .cabecalho-pagina > .botao, .cabecalho-pagina > .acoes { width: 100%; }
     .cabecalho-pagina .acoes { justify-content: stretch; }
     .cabecalho-pagina .acoes > * { flex: 1 1 auto; }
-    .grade-cartoes, .grade-indicadores, .atalhos, .comparacao-backup { grid-template-columns: 1fr; }
+    .grade-cartoes, .grade-indicadores, .atalhos { grid-template-columns: 1fr; }
     .filtros { grid-template-columns: 1fr; }
     .filtros .botao { width: 100%; }
     .acoes .botao { flex: 1 1 140px; }

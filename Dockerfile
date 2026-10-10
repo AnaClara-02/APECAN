@@ -9,18 +9,12 @@ COPY src/ src/
 RUN ./mvnw --batch-mode --no-transfer-progress -DskipTests package \
     && cp target/*.jar /build/app.jar
 
-# Runtime Java 25 com ferramentas de backup; o banco fica fora do container.
+# Runtime Java 25; o banco fica fora do container.
 FROM eclipse-temurin:25-jre-noble
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg fontconfig fonts-dejavu-core \
-    && install -d /usr/share/postgresql-common/pgdg \
-    && curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
-    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 \
-    && apt-get purge -y curl gnupg && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* \
-    && /usr/lib/postgresql/18/bin/pg_dump --version \
-    && /usr/lib/postgresql/18/bin/pg_restore --version
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates fontconfig fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system apecan && useradd --system --gid apecan --home-dir /app apecan \
-    && install -d -o apecan -g apecan -m 700 /app /tmp/apecan-backup
+    && install -d -o apecan -g apecan -m 700 /app
 WORKDIR /app
 COPY --from=build --chown=apecan:apecan /build/app.jar app.jar
 ENV JAVA_TOOL_OPTIONS="-Xms64m -Xmx256m -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true"

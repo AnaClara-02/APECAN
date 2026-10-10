@@ -12,21 +12,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @SpringBootTest class CoberturaRotasTests {
  @Autowired WebApplicationContext context; MockMvc mvc;
  @BeforeEach void setup(){mvc=MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();}
- @Test void backupPermiteUsuarioComumMasExigeDadosValidos() throws Exception {
-  mvc.perform(get("/administracao/backups").with(user("auditoria").roles("USUARIO"))).andExpect(status().isOk());
-  mvc.perform(get("/administracao/backups/exportacao").with(user("auditoria").roles("USUARIO"))).andExpect(status().isOk());
-  mvc.perform(post("/administracao/backups/exportacao").with(user("auditoria").roles("USUARIO")).with(csrf()))
-      .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("exportarBackupSqlForm", "senhaAtual"));
-  mvc.perform(get("/administracao/backups/importacao").with(user("auditoria").roles("USUARIO"))).andExpect(status().isOk());
-  mvc.perform(post("/administracao/backups/importacao/analisar").with(user("auditoria").roles("USUARIO")).with(csrf()))
-      .andExpect(status().isOk()).andExpect(model().attributeHasFieldErrors("importarBackupSqlForm", "arquivo"));
-  mvc.perform(post("/administracao/backups/importacao/confirmar").param("token", "inexistente")
-      .with(user("auditoria").roles("USUARIO")).with(csrf()))
-      .andExpect(status().isFound()).andExpect(redirectedUrl("/administracao/backups/importacao"));
-  mvc.perform(post("/administracao/backups/importacao/cancelar").param("token", "inexistente")
-      .with(user("auditoria").roles("USUARIO")).with(csrf()))
-      .andExpect(status().isFound()).andExpect(redirectedUrl("/administracao/backups/importacao"));
- }
  @Test void demaisRotasAdministrativasNegamUsuarioComum() throws Exception {
   mvc.perform(get("/usuarios").with(user("auditoria").roles("USUARIO"))).andExpect(status().isForbidden());
   mvc.perform(get("/usuarios/novo").with(user("auditoria").roles("USUARIO"))).andExpect(status().isForbidden());
@@ -45,13 +30,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
   mvc.perform(post("/minha-conta/senha").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(get("/")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/inicio")).andExpect(status().is3xxRedirection());
-  mvc.perform(get("/administracao/backups")).andExpect(status().is3xxRedirection());
-  mvc.perform(get("/administracao/backups/exportacao")).andExpect(status().is3xxRedirection());
-  mvc.perform(post("/administracao/backups/exportacao").with(csrf())).andExpect(status().is3xxRedirection());
-  mvc.perform(get("/administracao/backups/importacao")).andExpect(status().is3xxRedirection());
-  mvc.perform(post("/administracao/backups/importacao/analisar").with(csrf())).andExpect(status().is3xxRedirection());
-  mvc.perform(post("/administracao/backups/importacao/confirmar").with(csrf())).andExpect(status().is3xxRedirection());
-  mvc.perform(post("/administracao/backups/importacao/cancelar").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(get("/doacoes")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/doacoes/nova")).andExpect(status().is3xxRedirection());
   mvc.perform(post("/doacoes").with(csrf())).andExpect(status().is3xxRedirection());
