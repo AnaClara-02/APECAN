@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Detalhes da despesa | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina">
+        <div>
+            <p class="rotulo">Financeiro</p>
+            <h1>Despesa <span th:text="|#${despesa.id}|"></span></h1>
+            <p class="texto-secundario" th:text="${despesa.tipo}"></p>
+        </div>
+        <a class="botao botao-secundario"
+           th:href="@{/financeiro/despesas(inicio=${inicio},fim=${fim},pagina=${paginaRetorno})}">Voltar à lista</a>
+    </section>
+
+    <div class="alerta alerta-aviso alerta-centralizado" role="status"
+         th:if="${despesa.dadosFiscaisAntigosIncompletos}">
+        Os dados fiscais adicionais não estavam disponíveis quando esta despesa foi cadastrada.
+    </div>
+
+    <section class="cartao dados secao">
+        <h2>Dados da despesa</h2>
+        <dl>
+            <dt>Tipo</dt><dd th:text="${despesa.tipo}"></dd>
+            <dt>Descrição</dt><dd th:text="${despesa.descricao}"></dd>
+            <dt>Destino ou beneficiário</dt><dd th:text="${despesa.destino}"></dd>
+            <dt>Valor pago</dt>
+            <dd th:text="|R$ ${#numbers.formatDecimal(despesa.valor, 1, 'POINT', 2, 'COMMA')}|"></dd>
+            <dt>Data de pagamento</dt>
+            <dd th:text="${#temporals.format(despesa.dataPagamento, 'dd/MM/yyyy')}"></dd>
+            <dt>Banco de pagamento</dt><dd th:text="${despesa.bancoPagamentoDescricao}"></dd>
+        </dl>
+    </section>
+
+    <section class="cartao dados secao">
+        <h2>Nota fiscal</h2>
+        <dl>
+            <dt>Situação</dt>
+            <dd th:text="${despesa.possuiNotaFiscal ? 'Nota fiscal informada' : 'Sem nota fiscal'}"></dd>
+            <th:block th:if="${despesa.possuiNotaFiscal}">
+                <dt>Cadastro do emitente</dt><dd th:text="${despesa.nomeEmitenteExibido}"></dd>
+                <dt>CNPJ do emitente</dt><dd th:text="${despesa.cnpjFormatado}"></dd>
+                <dt>Número da nota</dt><dd th:text="${despesa.numeroNotaFiscal}"></dd>
+                <dt>Data de emissão</dt>
+                <dd th:text="${despesa.dataEmissao == null ? despesa.dataEmissaoExibida : #temporals.format(despesa.dataEmissao, 'dd/MM/yyyy')}"></dd>
+            </th:block>
+        </dl>
+    </section>
+
+    <div class="acoes">
+        <a class="botao botao-secundario"
+           th:href="@{/financeiro/despesas(inicio=${inicio},fim=${fim},pagina=${paginaRetorno})}">Voltar às despesas</a>
+    </div>
+</main>
+</body>
+</html>

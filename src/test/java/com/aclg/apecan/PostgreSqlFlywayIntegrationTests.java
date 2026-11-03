@@ -41,7 +41,7 @@ class PostgreSqlFlywayIntegrationTests {
 				   AND table_name = 'vw_resumo_equipamentos_por_categoria'
 				""", Integer.class);
 
-		assertThat(migracoes).isEqualTo(14);
+		assertThat(migracoes).isEqualTo(15);
 		assertThat(views).isEqualTo(1);
 		Integer tabelaAuditoria = jdbcTemplate.queryForObject("""
 				SELECT COUNT(*) FROM information_schema.tables
@@ -59,7 +59,15 @@ class PostgreSqlFlywayIntegrationTests {
 				""", Integer.class);
 		assertThat(auditoriaExclusoes).isEqualTo(1);
 		assertThat(jdbcTemplate.queryForObject("SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1", String.class))
-			.isEqualTo("14");
+			.isEqualTo("15");
+
+		Integer colunasNovasDespesa = jdbcTemplate.queryForObject("""
+				SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = 'public' AND table_name = 'despesas'
+				   AND column_name IN ('nome_emitente', 'cnpj_emitente', 'data_emissao',
+				                       'banco_pagamento', 'outro_banco_pagamento')
+				""", Integer.class);
+		assertThat(colunasNovasDespesa).isEqualTo(5);
 
 		String senhaTeste = "senha-ficticia-integracao";
 		Long usuarioId = jdbcTemplate.queryForObject("""
@@ -114,6 +122,27 @@ class PostgreSqlFlywayIntegrationTests {
 		var limite = new com.aclg.apecan.auth.security.LimiteRecuperacaoService(controleStore, java.time.Clock.systemUTC());
 		assertThat(limite.permitir("integracao@example.invalid")).isTrue();
 		assertThat(limite.permitir("integracao@example.invalid")).isFalse();
+
+		Long movimentacaoId = jdbcTemplate.queryForObject("""
+				INSERT INTO movimentacoes_financeiras (
+				    tipo_movimentacao, valor, data_movimentacao, destino, origem_tipo,
+				    origem_descricao, registrado_por_usuario_id
+				) VALUES ('SAIDA', 25.00, CURRENT_DATE, 'Despesa de teste', 'OUTRO_MEIO',
+				          'Teste de migração', ?) RETURNING id_movimentacao
+				""", Long.class, usuarioId);
+		Long despesaId = jdbcTemplate.queryForObject("""
+				INSERT INTO despesas (
+				    tipo_despesa, descricao, numero_nota_fiscal, nome_emitente, cnpj_emitente,
+				    data_emissao, banco_pagamento, outro_banco_pagamento,
+				    id_movimentacao_financeira, registrado_por_usuario_id
+				) VALUES ('Teste', 'Despesa sem nota', NULL, NULL, NULL, NULL, 'SICOOB', NULL, ?, ?)
+				RETURNING id_despesa
+				""", Long.class, movimentacaoId, usuarioId);
+		assertThat(jdbcTemplate.queryForObject(
+				"SELECT numero_nota_fiscal FROM despesas WHERE id_despesa = ?", String.class, despesaId)).isNull();
+		assertThatThrownBy(() -> jdbcTemplate.update(
+				"UPDATE despesas SET outro_banco_pagamento = 'Banco indevido' WHERE id_despesa = ?", despesaId))
+			.isInstanceOf(DataIntegrityViolationException.class);
 	}
 
 }

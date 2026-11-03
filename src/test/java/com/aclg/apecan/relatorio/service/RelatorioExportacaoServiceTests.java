@@ -2,6 +2,7 @@ package com.aclg.apecan.relatorio.service;
 
 import com.aclg.apecan.auth.security.UsuarioAtual;
 import com.aclg.apecan.doacao.repository.DoacaoRepository;
+import com.aclg.apecan.despesa.repository.DespesaRepository;
 import com.aclg.apecan.emprestimo.repository.EmprestimoEquipamentoRepository;
 import com.aclg.apecan.equipamento.repository.EquipamentoRepository;
 import com.aclg.apecan.financeiro.repository.MovimentacaoFinanceiraRepository;
@@ -53,7 +54,8 @@ class RelatorioExportacaoServiceTests {
         });
         return new RelatorioExportacaoService(pacientes, mock(VoluntarioRepository.class),
                 mock(EmprestimoEquipamentoRepository.class), mock(DoacaoRepository.class),
-                mock(MovimentacaoFinanceiraRepository.class), mock(EquipamentoRepository.class), historico,
+                mock(MovimentacaoFinanceiraRepository.class), mock(DespesaRepository.class),
+                mock(EquipamentoRepository.class), historico,
                 usuarios, atual, clock, em, limites, manager);
     }
 

@@ -5,7 +5,8 @@ public enum TipoRelatorio {
 	VOLUNTARIOS("voluntarios"),
 	EMPRESTIMOS("emprestimos"),
 	DOACOES("doacoes"),
-	MOVIMENTACOES_FINANCEIRAS("movimentacoes-financeiras");
+	MOVIMENTACOES_FINANCEIRAS("movimentacoes-financeiras"),
+	DESPESAS("despesas");
 
 	private final String slug;
 

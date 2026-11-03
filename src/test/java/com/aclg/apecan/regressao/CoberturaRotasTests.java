@@ -52,6 +52,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
   mvc.perform(post("/financeiro").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(get("/financeiro/despesas")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/financeiro/despesas/nova")).andExpect(status().is3xxRedirection());
+  mvc.perform(get("/financeiro/despesas/999")).andExpect(status().is3xxRedirection());
   mvc.perform(post("/financeiro/despesas").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(get("/pacientes")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/pacientes/novo")).andExpect(status().is3xxRedirection());
@@ -61,6 +62,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
   mvc.perform(post("/pacientes/999/editar").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(post("/pacientes/999/status").with(csrf())).andExpect(status().is3xxRedirection());
   mvc.perform(get("/relatorios/pacientes/exportar")).andExpect(status().is3xxRedirection());
+  mvc.perform(get("/relatorios/despesas/exportar?formato=PDF")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/relatorios")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/usuarios")).andExpect(status().is3xxRedirection());
   mvc.perform(get("/usuarios/novo")).andExpect(status().is3xxRedirection());

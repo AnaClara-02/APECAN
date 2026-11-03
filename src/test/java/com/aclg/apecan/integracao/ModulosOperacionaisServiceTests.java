@@ -3,6 +3,7 @@ package com.aclg.apecan.integracao;
 import com.aclg.apecan.auth.security.UsuarioPrincipal;
 import com.aclg.apecan.auth.service.AtivacaoUsuarioService;
 import com.aclg.apecan.despesa.dto.DespesaForm;
+import com.aclg.apecan.despesa.entity.BancoPagamentoDespesa;
 import com.aclg.apecan.despesa.repository.DespesaRepository;
 import com.aclg.apecan.doacao.dto.DoacaoForm;
 import com.aclg.apecan.doacao.entity.TipoDoacao;
@@ -144,14 +145,36 @@ class ModulosOperacionaisServiceTests {
 		DespesaForm despesa = new DespesaForm();
 		despesa.setTipo("Energia");
 		despesa.setDescricao("Conta mensal");
-		despesa.setNumeroNotaFiscal("NF-2026-01");
 		despesa.setValor(new BigDecimal("50.00"));
-		despesa.setData(LocalDate.now());
+		despesa.setDataPagamento(LocalDate.now());
 		despesa.setDestino("Concessionaria");
+		despesa.setBancoPagamento(BancoPagamentoDespesa.SICOOB);
 		financeiro.registrarDespesa(despesa);
 		assertThat(despesas.count()).isEqualTo(1);
+		assertThat(financeiro.despesas(null, null, 0).getTotalElements()).isEqualTo(1);
+		assertThat(financeiro.totalDespesas(null, null)).isEqualByComparingTo("50.00");
 		assertThat(movimentos.count()).isEqualTo(2);
 		assertThat(financeiro.saldo(null, null)).isEqualByComparingTo("75.50");
+	}
+
+	@Test
+	void deveRegistrarNotaOpcionalComCnpjAlfanumericoEOutroBanco() {
+		autenticar(administrador());
+		DespesaForm despesa = novaDespesa();
+		despesa.setPossuiNotaFiscal(true);
+		despesa.setNomeEmitente("Fornecedor de teste");
+		despesa.setCnpjEmitente("abc12345678923");
+		despesa.setNumeroNotaFiscal("NF-TESTE-15");
+		despesa.setDataEmissao(LocalDate.now().minusDays(1));
+		despesa.setBancoPagamento(BancoPagamentoDespesa.OUTRO);
+		despesa.setOutroBancoPagamento("Banco de teste");
+		Long id = financeiro.registrarDespesa(despesa);
+
+		var registrada = despesas.buscarDetalhe(id).orElseThrow();
+		assertThat(registrada.getCnpjEmitente()).isEqualTo("ABC12345678923");
+		assertThat(registrada.getNumeroNotaFiscal()).isEqualTo("NF-TESTE-15");
+		assertThat(registrada.getOutroBancoPagamento()).isEqualTo("Banco de teste");
+		assertThat(registrada.getMovimentacaoFinanceira().getTipo()).isEqualTo(TipoMovimentacao.SAIDA);
 	}
 
 	@Test
@@ -187,6 +210,10 @@ class ModulosOperacionaisServiceTests {
 		formulario.setDescricao("Valor iniciado por formula");
 		financeiro.registrar(formulario);
 
+		DespesaForm despesa = novaDespesa();
+		despesa.setValor(new BigDecimal("5.25"));
+		financeiro.registrarDespesa(despesa);
+
         try (var xlsx = exportacoes.exportar(TipoRelatorio.MOVIMENTACOES_FINANCEIRAS, FormatoRelatorio.XLSX, null, null);
                 var entrada = java.nio.file.Files.newInputStream(xlsx.caminho());
                 XSSFWorkbook workbook = new XSSFWorkbook(entrada)) {
@@ -197,6 +224,33 @@ class ModulosOperacionaisServiceTests {
             assertThat(new String(entrada.readNBytes(4), java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
         }
 		assertThat(historicoExportacoes.count()).isEqualTo(2);
+
+		try (var xlsx = exportacoes.exportar(TipoRelatorio.DESPESAS, FormatoRelatorio.XLSX, null, null);
+				var entrada = java.nio.file.Files.newInputStream(xlsx.caminho());
+				XSSFWorkbook workbook = new XSSFWorkbook(entrada)) {
+			var linha = workbook.getSheetAt(0).getRow(4);
+			assertThat(linha.getCell(0).getNumericCellValue()).isPositive();
+			assertThat(linha.getCell(5).getStringCellValue()).isEqualTo("Sem nota fiscal");
+			assertThat(linha.getCell(7).getCellType()).isEqualTo(org.apache.poi.ss.usermodel.CellType.NUMERIC);
+			assertThat(linha.getCell(10).getNumericCellValue()).isEqualTo(5.25);
+		}
+		try (var pdf = exportacoes.exportar(TipoRelatorio.DESPESAS, FormatoRelatorio.PDF, null, null);
+				var reader = new org.openpdf.text.pdf.PdfReader(java.nio.file.Files.readAllBytes(pdf.caminho()))) {
+			var extrator = new org.openpdf.text.pdf.parser.PdfTextExtractor(reader);
+			assertThat(extrator.getTextFromPage(1)).contains("Sem nota fiscal", "Banco Cooperativo Sicoob S.A.", "5,25");
+		}
+		assertThat(historicoExportacoes.count()).isEqualTo(4);
+	}
+
+	private DespesaForm novaDespesa() {
+		DespesaForm formulario = new DespesaForm();
+		formulario.setTipo("Energia");
+		formulario.setDescricao("Conta mensal");
+		formulario.setValor(new BigDecimal("50.00"));
+		formulario.setDataPagamento(LocalDate.now());
+		formulario.setDestino("Concessionaria");
+		formulario.setBancoPagamento(BancoPagamentoDespesa.SICOOB);
+		return formulario;
 	}
 
 	private Usuario administrador() {

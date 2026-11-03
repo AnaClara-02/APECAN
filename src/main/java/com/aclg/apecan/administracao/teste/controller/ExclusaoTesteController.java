@@ -66,7 +66,7 @@ public class ExclusaoTesteController {
                 case CATEGORIA -> java.util.Set.of();
                 case EMPRESTIMO -> java.util.Set.of("pagina", "status");
                 case DOACAO -> java.util.Set.of("pagina", "tipo", "inicio", "fim");
-                case DESPESA -> java.util.Set.of("pagina");
+                case DESPESA -> java.util.Set.of("pagina", "inicio", "fim");
                 case MOVIMENTACAO -> java.util.Set.of("pagina", "tipo", "inicio", "fim");
             };
             String query = uri.getRawQuery();

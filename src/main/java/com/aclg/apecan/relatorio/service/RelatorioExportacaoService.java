@@ -1,6 +1,8 @@
 package com.aclg.apecan.relatorio.service;
 
 import com.aclg.apecan.auth.security.UsuarioAtual;
+import com.aclg.apecan.despesa.entity.Despesa;
+import com.aclg.apecan.despesa.repository.DespesaRepository;
 import com.aclg.apecan.doacao.entity.Doacao;
 import com.aclg.apecan.doacao.repository.DoacaoRepository;
 import com.aclg.apecan.emprestimo.entity.EmprestimoEquipamento;
@@ -14,6 +16,7 @@ import com.aclg.apecan.relatorio.entity.*;
 import com.aclg.apecan.relatorio.repository.HistoricoExportacaoRepository;
 import com.aclg.apecan.shared.exception.OperacaoInvalidaException;
 import com.aclg.apecan.shared.validation.CpfFormatter;
+import com.aclg.apecan.shared.validation.CnpjFormatter;
 import com.aclg.apecan.shared.validation.TelefoneFormatter;
 import com.aclg.apecan.usuario.entity.Usuario;
 import com.aclg.apecan.usuario.repository.UsuarioRepository;
@@ -67,6 +70,7 @@ public class RelatorioExportacaoService {
 	private final EmprestimoEquipamentoRepository emprestimos;
 	private final DoacaoRepository doacoes;
 	private final MovimentacaoFinanceiraRepository movimentos;
+	private final DespesaRepository despesas;
 	private final EquipamentoRepository equipamentos;
 	private final HistoricoExportacaoRepository historico;
 	private final UsuarioRepository usuarios;
@@ -80,7 +84,7 @@ public class RelatorioExportacaoService {
 
 	public RelatorioExportacaoService(PacienteRepository pacientes, VoluntarioRepository voluntarios,
 			EmprestimoEquipamentoRepository emprestimos, DoacaoRepository doacoes,
-			MovimentacaoFinanceiraRepository movimentos, EquipamentoRepository equipamentos,
+			MovimentacaoFinanceiraRepository movimentos, DespesaRepository despesas, EquipamentoRepository equipamentos,
 			HistoricoExportacaoRepository historico, UsuarioRepository usuarios, UsuarioAtual usuarioAtual, Clock clock,
             EntityManager entityManager, LimitesExportacao limites, PlatformTransactionManager manager) {
 		this.pacientes = pacientes;
@@ -88,6 +92,7 @@ public class RelatorioExportacaoService {
 		this.emprestimos = emprestimos;
 		this.doacoes = doacoes;
 		this.movimentos = movimentos;
+		this.despesas = despesas;
 		this.equipamentos = equipamentos;
 		this.historico = historico;
 		this.usuarios = usuarios;
@@ -146,6 +151,7 @@ public class RelatorioExportacaoService {
             case EMPRESTIMOS -> emprestimos(inicio, fim, linha);
             case DOACOES -> doacoes(inicio, fim, linha);
             case MOVIMENTACOES_FINANCEIRAS -> movimentos(inicio, fim, linha);
+			case DESPESAS -> despesas(inicio, fim, linha);
         }
         verificarPrazo(prazo);
         return quantidade[0];
@@ -235,6 +241,33 @@ public class RelatorioExportacaoService {
 
 	}
 
+	private void despesas(LocalDate inicio, LocalDate fim, Consumer<String[]> destino) {
+		int pagina = 0;
+		Page<Despesa> lote;
+		do {
+			lote = despesas.pesquisar(inicio, fim, PageRequest.of(pagina++, LOTE));
+			for (Despesa despesa : lote) {
+				boolean antigaIncompleta = despesa.getNumeroNotaFiscal() != null
+						&& (despesa.getNomeEmitente() == null || despesa.getCnpjEmitente() == null
+								|| despesa.getDataEmissao() == null || despesa.getBancoPagamento() == null);
+				String naoInformado = antigaIncompleta ? "Não informado — registro anterior à atualização" : "";
+				String emitente = despesa.getNomeEmitente() == null ? naoInformado : despesa.getNomeEmitente();
+				String cnpj = despesa.getCnpjEmitente() == null ? naoInformado
+						: CnpjFormatter.formatar(despesa.getCnpjEmitente());
+				String nota = despesa.getNumeroNotaFiscal() == null ? "Sem nota fiscal" : despesa.getNumeroNotaFiscal();
+				String emissao = despesa.getDataEmissao() == null ? naoInformado : data(despesa.getDataEmissao());
+				String banco = despesa.getBancoPagamento() == null ? naoInformado
+						: despesa.getBancoPagamento() == com.aclg.apecan.despesa.entity.BancoPagamentoDespesa.OUTRO
+								? despesa.getOutroBancoPagamento() : despesa.getBancoPagamento().getDescricao();
+				MovimentacaoFinanceira pagamento = despesa.getMovimentacaoFinanceira();
+				destino.accept(new String[]{s(despesa.getId()), despesa.getTipo(), despesa.getDescricao(),
+						emitente, cnpj, nota, emissao, data(pagamento.getDataMovimentacao()),
+						pagamento.getDestino(), banco, moeda(pagamento.getValor())});
+			}
+			entityManager.clear();
+		} while (lote.hasNext());
+	}
+
 	@SuppressWarnings("deprecation") // POI 5.5.1: descartar antes de close também quando carregar falha.
     private int xlsx(TipoRelatorio tipo, OutputStream saida, LocalDate inicio, LocalDate fim, long prazo) throws Exception {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100);
@@ -247,13 +280,30 @@ public class RelatorioExportacaoService {
             planilha.createRow(1).createCell(0).setCellValue(periodo(inicio, fim));
             Row headers = planilha.createRow(3);
             String[] nomes = cabecalhos(tipo);
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setDataFormat(workbook.createDataFormat().getFormat("dd/mm/yyyy"));
+            CellStyle moedaStyle = workbook.createCellStyle();
+            moedaStyle.setDataFormat(workbook.createDataFormat().getFormat("\"R$\" #,##0.00"));
             for (int i = 0; i < nomes.length; i++) {
-                Cell c = headers.createCell(i); c.setCellValue(nomes[i]); c.setCellStyle(cabecalho); planilha.setColumnWidth(i, 4800);
+                Cell c = headers.createCell(i);
+                c.setCellValue(nomes[i]);
+                c.setCellStyle(cabecalho);
+                planilha.setColumnWidth(i, tipo == TipoRelatorio.DESPESAS
+                        ? new int[]{2600, 4000, 8000, 7000, 6000, 4000, 4200, 4200, 7000, 6500, 4200}[i]
+                        : 4800);
             }
             int[] numero = {4};
             int quantidade = carregar(tipo, inicio, fim, linha -> {
                 Row row = planilha.createRow(numero[0]++);
-                for (int i = 0; i < linha.length; i++) row.createCell(i).setCellValue(seguroExcel(linha[i]));
+                for (int i = 0; i < linha.length; i++) {
+                    Cell cell = row.createCell(i);
+                    if (tipo == TipoRelatorio.DESPESAS) {
+                        preencherCelulaDespesa(cell, linha[i], i, dataStyle, moedaStyle);
+                    }
+                    else {
+                        cell.setCellValue(seguroExcel(linha[i]));
+                    }
+                }
             }, prazo);
             workbook.write(saida);
             verificarPrazo(prazo);
@@ -275,7 +325,7 @@ public class RelatorioExportacaoService {
             documento.add(new Paragraph("APECAN — " + titulo(tipo), new org.openpdf.text.Font(base, 16, org.openpdf.text.Font.BOLD)));
             documento.add(new Paragraph(periodo(inicio, fim), fonte));
             documento.add(Chunk.NEWLINE);
-            String[] nomes = cabecalhos(tipo);
+            String[] nomes = cabecalhosPdf(tipo);
             PdfPTable tabela = new PdfPTable(nomes.length);
             tabela.setWidthPercentage(100); tabela.setHeaderRows(1); tabela.setComplete(false);
             for (String h : nomes) {
@@ -283,7 +333,8 @@ public class RelatorioExportacaoService {
             }
             int[] lote = {0};
             int quantidade = carregar(tipo, inicio, fim, linha -> {
-                for (String valor : linha) tabela.addCell(new Phrase(valor, fonte));
+                String[] valores = linhaPdf(tipo, linha);
+                for (String valor : valores) tabela.addCell(new Phrase(valor, fonte));
                 if (++lote[0] == 100) {
                     documento.add(tabela); tabela.flushContent(); lote[0] = 0;
                 }
@@ -301,7 +352,58 @@ public class RelatorioExportacaoService {
             case EMPRESTIMOS -> new String[]{"ID", "Equipamento", "Categoria", "Paciente", "Empréstimo", "Previsão", "Devolução", "Status"};
             case DOACOES -> new String[]{"ID", "Data", "Tipo", "Fonte", "Quantidade", "Unidade", "Equipamentos", "Valor"};
             case MOVIMENTACOES_FINANCEIRAS -> new String[]{"ID", "Data", "Tipo", "Valor", "Destino", "Origem", "Descrição", "Doação"};
+            case DESPESAS -> new String[]{"ID", "Tipo", "Descrição", "Emitente", "CNPJ", "Número da nota",
+                    "Emissão", "Pagamento", "Beneficiário", "Banco", "Valor"};
         };
+    }
+
+    private String[] cabecalhosPdf(TipoRelatorio tipo) {
+        if (tipo == TipoRelatorio.DESPESAS) {
+            return new String[]{"ID", "Tipo", "Descrição", "Emitente / CNPJ", "Nota / emissão",
+                    "Pagamento", "Beneficiário", "Banco", "Valor"};
+        }
+        return cabecalhos(tipo);
+    }
+
+    private String[] linhaPdf(TipoRelatorio tipo, String[] linha) {
+        if (tipo != TipoRelatorio.DESPESAS) return linha;
+        String emitente = juntar("Emitente", linha[3], "CNPJ", linha[4]);
+        String nota = juntar("Nº", linha[5], "Emissão", linha[6]);
+        return new String[]{linha[0], linha[1], linha[2], emitente, nota, linha[7],
+                linha[8], linha[9], linha[10]};
+    }
+
+    private String juntar(String rotulo1, String valor1, String rotulo2, String valor2) {
+        String primeiro = valor1 == null || valor1.isBlank() ? "" : rotulo1 + ": " + valor1;
+        String segundo = valor2 == null || valor2.isBlank() ? "" : rotulo2 + ": " + valor2;
+        if (primeiro.isEmpty()) return segundo.isEmpty() ? "—" : segundo;
+        return segundo.isEmpty() ? primeiro : primeiro + " | " + segundo;
+    }
+
+    private void preencherCelulaDespesa(Cell celula, String valor, int coluna,
+                                         CellStyle estiloData, CellStyle estiloMoeda) {
+        if (valor == null || valor.isBlank()) {
+            celula.setBlank();
+            return;
+        }
+        if (coluna == 0) {
+            celula.setCellValue(Long.parseLong(valor));
+        }
+        else if (coluna == 6 || coluna == 7) {
+            LocalDate data = LocalDate.parse(valor, DATA);
+            long dias = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.of(1899, 12, 30), data);
+            celula.setCellValue((double) dias);
+            celula.setCellStyle(estiloData);
+        }
+        else if (coluna == 10) {
+            BigDecimal numero = new BigDecimal(valor.replace("R$", "").replace(".", "")
+                    .replace(',', '.').trim());
+            celula.setCellValue(numero.doubleValue());
+            celula.setCellStyle(estiloMoeda);
+        }
+        else {
+            celula.setCellValue(seguroExcel(valor));
+        }
     }
 
 	private void validarPeriodo(LocalDate inicio, LocalDate fim) {

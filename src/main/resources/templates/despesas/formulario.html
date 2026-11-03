@@ -1,7 +1,117 @@
 <!DOCTYPE html>
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nova despesa | APECAN</title><link rel="stylesheet" th:href="@{/css/app.css}">    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nova despesa | APECAN</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/png" th:href="@{/images/logo-apecan.png(v=2)}">
+    <script th:src="@{/js/despesa-form.js}" defer></script>
 </head>
-<body><header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
-<main id="conteudo-principal" class="conteudo conteudo-estreito"><section class="cabecalho-pagina"><div><p class="rotulo">Financeiro</p><h1>Nova despesa</h1><p class="texto-secundario">O valor será registrado automaticamente como uma saída financeira.</p></div><a class="botao botao-secundario" th:href="@{/financeiro/despesas}">Voltar</a></section><form class="cartao formulario" th:action="@{/financeiro/despesas}" th:object="${despesaForm}" method="post"><div class="alerta alerta-erro" role="alert" th:if="${#fields.hasAnyErrors()}">Revise os campos indicados antes de continuar.</div><label for="tipo">Tipo</label><input id="tipo" th:field="*{tipo}" maxlength="50" required><p class="erro-campo" th:errors="*{tipo}"></p><label for="descricao">Descrição</label><input id="descricao" th:field="*{descricao}" maxlength="255" required><p class="erro-campo" th:errors="*{descricao}"></p><label for="nota">Número da nota fiscal</label><input id="nota" th:field="*{numeroNotaFiscal}" maxlength="20" required><p class="erro-campo" th:errors="*{numeroNotaFiscal}"></p><label for="valor">Valor</label><input id="valor" type="number" step="0.01" min="0.01" th:field="*{valor}" required><p class="erro-campo" th:errors="*{valor}"></p><label for="data">Data</label><input id="data" type="date" th:field="*{data}" required><p class="erro-campo" th:errors="*{data}"></p><label for="destino">Destino ou beneficiário</label><input id="destino" th:field="*{destino}" maxlength="150" required><p class="erro-campo" th:errors="*{destino}"></p><div class="acoes"><button class="botao botao-primario">Registrar despesa</button><a class="botao" th:href="@{/financeiro/despesas}">Cancelar</a></div></form></main>
-</body></html>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main id="conteudo-principal" class="conteudo conteudo-estreito">
+    <div th:replace="~{fragments/cabecalho :: mensagens}"></div>
+    <section class="cabecalho-pagina">
+        <div>
+            <p class="rotulo">Financeiro</p>
+            <h1>Nova despesa</h1>
+            <p class="texto-secundario">O valor e a data de pagamento serão registrados como uma saída financeira.</p>
+        </div>
+        <a class="botao botao-secundario" th:href="@{/financeiro/despesas}">Voltar</a>
+    </section>
+
+    <form class="cartao formulario" data-despesa-form th:action="@{/financeiro/despesas}"
+          th:object="${despesaForm}" method="post">
+        <div class="alerta alerta-erro" role="alert" th:if="${#fields.hasAnyErrors()}">
+            Revise os campos indicados antes de continuar.
+        </div>
+
+        <fieldset class="grupo-formulario">
+            <legend>Dados da despesa</legend>
+            <label for="tipo">Tipo</label>
+            <input id="tipo" th:field="*{tipo}" maxlength="50" required>
+            <p class="erro-campo" th:errors="*{tipo}"></p>
+
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" th:field="*{descricao}" maxlength="255" required></textarea>
+            <p class="ajuda">A mesma descrição será usada na despesa e na nota fiscal.</p>
+            <p class="erro-campo" th:errors="*{descricao}"></p>
+
+            <label for="destino">Destino ou beneficiário</label>
+            <input id="destino" th:field="*{destino}" maxlength="150" required>
+            <p class="erro-campo" th:errors="*{destino}"></p>
+        </fieldset>
+
+        <fieldset class="grupo-formulario">
+            <legend>Nota fiscal (opcional)</legend>
+            <label class="opcao-checkbox" for="possuiNotaFiscal">
+                <input id="possuiNotaFiscal" type="checkbox" th:field="*{possuiNotaFiscal}"
+                       data-possui-nota>
+                A despesa possui nota fiscal
+            </label>
+            <p class="ajuda">Ao marcar, preencha todos os dados fiscais.</p>
+
+            <div class="campos-nota-fiscal" data-campos-nota>
+                <label for="nomeEmitente">Cadastro do emitente (nome ou razão social)</label>
+                <input id="nomeEmitente" th:field="*{nomeEmitente}" maxlength="150"
+                       data-campo-nota required>
+                <p class="erro-campo" th:errors="*{nomeEmitente}"></p>
+
+                <label for="cnpjEmitente">CNPJ do emitente</label>
+                <input id="cnpjEmitente" th:field="*{cnpjEmitente}" maxlength="18"
+                       placeholder="00.000.000/0000-00" autocomplete="off"
+                       data-campo-nota required>
+                <p class="erro-campo" th:errors="*{cnpjEmitente}"></p>
+
+                <label for="numeroNotaFiscal">Número da nota</label>
+                <input id="numeroNotaFiscal" th:field="*{numeroNotaFiscal}" maxlength="20"
+                       data-campo-nota required>
+                <p class="erro-campo" th:errors="*{numeroNotaFiscal}"></p>
+
+                <label for="dataEmissao">Data de emissão</label>
+                <input id="dataEmissao" type="date" th:field="*{dataEmissao}"
+                       th:attr="max=${dataMaxima}" data-campo-nota required>
+                <p class="erro-campo" th:errors="*{dataEmissao}"></p>
+            </div>
+            <p class="erro-campo" th:if="${#fields.hasErrors('possuiNotaFiscal')}"
+               th:errors="*{possuiNotaFiscal}"></p>
+        </fieldset>
+
+        <fieldset class="grupo-formulario">
+            <legend>Pagamento</legend>
+            <label for="valor">Valor pago</label>
+            <input id="valor" type="number" step="0.01" min="0.01" max="9999999999.99"
+                   th:field="*{valor}" required>
+            <p class="ajuda">Informe um valor entre R$ 0,01 e R$ 9.999.999.999,99.</p>
+            <p class="erro-campo" th:errors="*{valor}"></p>
+
+            <label for="dataPagamento">Data de pagamento</label>
+            <input id="dataPagamento" type="date" th:field="*{dataPagamento}"
+                   th:attr="max=${dataMaxima}" required>
+            <p class="erro-campo" th:errors="*{dataPagamento}"></p>
+
+            <label for="bancoPagamento">Banco de pagamento</label>
+            <select id="bancoPagamento" th:field="*{bancoPagamento}" data-banco-pagamento required>
+                <option value="">Selecione o banco</option>
+                <option th:each="banco : ${bancosPagamento}" th:value="${banco}"
+                        th:text="${banco.descricao}"></option>
+            </select>
+            <p class="erro-campo" th:errors="*{bancoPagamento}"></p>
+
+            <div data-outro-banco>
+                <label for="outroBancoPagamento">Nome do outro banco</label>
+                <input id="outroBancoPagamento" th:field="*{outroBancoPagamento}" maxlength="150"
+                       data-campo-outro required>
+                <p class="erro-campo" th:errors="*{outroBancoPagamento}"></p>
+            </div>
+        </fieldset>
+
+        <div class="acoes">
+            <button class="botao botao-primario" type="submit">Registrar despesa</button>
+            <a class="botao" th:href="@{/financeiro/despesas}">Cancelar</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>
